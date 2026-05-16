@@ -3,321 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgriShield – Circuit Diagram</title>
+<title>AgriShield – Circuit Diagram (REV 1.2)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap');
 
   :root {
-    --bg: #0a0e0a;
-    --grid: #0d1a0d;
-    --panel: #0f1f0f;
-    --border: #1a3a1a;
-    --green: #00e676;
-    --green-dim: #1b4d1b;
-    --amber: #ffab00;
-    --red: #ff1744;
-    --blue: #00b0ff;
-    --purple: #d500f9;
-    --white: #e8f5e9;
-    --muted: #4a6a4a;
-
-    /* Wire colors */
-    --w-power: #ff5252;
-    --w-gnd: #000000;
-    --w-uart: #00e5ff;
-    --w-signal: #ffeb3b;
-    --w-solar: #ff9800;
-    --w-mosfet: #e040fb;
-    --w-3v3: #76ff03;
-    --w-5v: #ff5252;
+    --bg: #0a0e0a; --grid: #0d1a0d; --panel: #0f1f0f; --border: #1a3a1a;
+    --green: #00e676; --green-dim: #1b4d1b; --amber: #ffab00; --red: #ff1744;
+    --blue: #00b0ff; --purple: #d500f9; --white: #e8f5e9; --muted: #4a6a4a;
+    --w-power: #ff5252; --w-gnd: #000000; --w-uart: #00e5ff;
+    --w-signal: #ffeb3b; --w-solar: #ff9800; --w-mosfet: #e040fb;
+    --w-3v3: #76ff03; --w-5v: #ff5252;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    background: var(--bg);
-    font-family: 'Rajdhani', sans-serif;
-    color: var(--white);
-    overflow-x: hidden;
-  }
+  body { background: var(--bg); font-family: 'Rajdhani', sans-serif; color: var(--white); overflow-x: hidden; }
 
-  /* Scanline overlay */
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
+    content: ''; position: fixed; inset: 0;
     background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-    pointer-events: none;
-    z-index: 1000;
+    pointer-events: none; z-index: 1000;
   }
 
   header {
     background: linear-gradient(135deg, #051205 0%, #0a1f0a 100%);
-    border-bottom: 1px solid var(--green);
-    padding: 18px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    border-bottom: 1px solid var(--green); padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
     box-shadow: 0 0 30px rgba(0,230,118,0.15);
   }
 
-  .logo {
-    font-family: 'Orbitron', monospace;
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--green);
-    letter-spacing: 3px;
-    text-shadow: 0 0 20px rgba(0,230,118,0.5);
-  }
+  .logo { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900; color: var(--green); letter-spacing: 3px; text-shadow: 0 0 20px rgba(0,230,118,0.5); }
   .logo span { color: var(--amber); }
+  .subtitle { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .badge { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); padding: 4px 12px; font-size: 11px; font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; }
 
-  .subtitle {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .badge {
-    background: var(--green-dim);
-    border: 1px solid var(--green);
-    color: var(--green);
-    padding: 4px 12px;
-    font-size: 11px;
-    font-family: 'Share Tech Mono', monospace;
-    letter-spacing: 1px;
-  }
-
-  /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 0;
-    background: #060d06;
-    border-bottom: 1px solid var(--border);
-    padding: 0 40px;
-  }
-
-  .tab {
-    padding: 12px 24px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 1px;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    text-transform: uppercase;
-  }
-
-  .tab.active {
-    color: var(--green);
-    border-bottom-color: var(--green);
-  }
-
+  .tabs { display: flex; gap: 0; background: #060d06; border-bottom: 1px solid var(--border); padding: 0 40px; }
+  .tab { padding: 12px 24px; font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 1px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
   .tab:hover:not(.active) { color: var(--white); }
 
   .page { display: none; padding: 30px 40px; }
   .page.active { display: block; }
 
-  /* ===== SCHEMATIC ===== */
-  .schematic-wrap {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 20px;
-    overflow-x: auto;
-  }
-
+  .schematic-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 2px; padding: 20px; overflow-x: auto; }
   svg text { font-family: 'Share Tech Mono', monospace; }
 
-  /* ===== WIRING TABLE ===== */
-  .section-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 13px;
-    color: var(--green);
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-
+  .section-title { font-family: 'Orbitron', monospace; font-size: 13px; color: var(--green); letter-spacing: 2px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
   .wire-group { margin-bottom: 32px; }
+  .wire-label { display: inline-flex; align-items: center; gap: 8px; font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; }
+  .wire-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-  .wire-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: var(--muted);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-  }
-
-  .wire-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-
-  th {
-    background: #0a1a0a;
-    color: var(--green);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    padding: 10px 14px;
-    text-align: left;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td {
-    padding: 9px 14px;
-    border-bottom: 1px solid #111a11;
-    color: #c8e6c9;
-    vertical-align: middle;
-  }
-
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #0a1a0a; color: var(--green); font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 1.5px; padding: 10px 14px; text-align: left; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid #111a11; color: #c8e6c9; vertical-align: middle; }
   tr:hover td { background: #0d1f0d; }
 
-  .pin-badge {
-    display: inline-block;
-    background: #112011;
-    border: 1px solid var(--border);
-    color: var(--amber);
-    padding: 2px 8px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-  }
-
-  .wire-color-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .color-swatch {
-    width: 28px;
-    height: 6px;
-    border-radius: 3px;
-  }
+  .pin-badge { display: inline-block; background: #112011; border: 1px solid var(--border); color: var(--amber); padding: 2px 8px; font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 0.5px; }
+  .wire-color-cell { display: flex; align-items: center; gap: 8px; }
+  .color-swatch { width: 28px; height: 6px; border-radius: 3px; }
 
   .warn { color: var(--red); font-size: 11px; font-family: 'Share Tech Mono', monospace; }
   .note { color: var(--amber); font-size: 11px; }
   .ok { color: var(--green); font-size: 11px; }
 
-  /* ===== POWER BUDGET ===== */
-  .budget-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 24px;
-  }
-
-  .budget-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    padding: 20px;
-  }
-
-  .budget-card h3 {
-    font-family: 'Orbitron', monospace;
-    font-size: 11px;
-    color: var(--green);
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-  }
-
-  .budget-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 7px 0;
-    border-bottom: 1px solid #111a11;
-    font-size: 13px;
-  }
-
+  .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .budget-card { background: var(--panel); border: 1px solid var(--border); padding: 20px; }
+  .budget-card h3 { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--green); letter-spacing: 2px; margin-bottom: 16px; }
+  .budget-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #111a11; font-size: 13px; }
   .budget-row:last-child { border-bottom: none; }
-
   .budget-val { font-family: 'Share Tech Mono', monospace; color: var(--amber); }
   .budget-total { color: var(--red); font-weight: 700; }
   .budget-good { color: var(--green); font-weight: 700; }
 
-  .result-box {
-    background: #051205;
-    border: 1px solid var(--green);
-    padding: 20px;
-    margin-top: 20px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    line-height: 1.8;
-    color: var(--green);
-    box-shadow: 0 0 20px rgba(0,230,118,0.1);
-  }
-
+  .result-box { background: #051205; border: 1px solid var(--green); padding: 20px; margin-top: 20px; font-family: 'Share Tech Mono', monospace; font-size: 13px; line-height: 1.8; color: var(--green); box-shadow: 0 0 20px rgba(0,230,118,0.1); }
   .result-box .highlight { color: var(--amber); }
-
-  /* ===== BOM ===== */
-  .bom-filter {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-
-  .filter-btn {
-    background: #0a1a0a;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 6px 16px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
-  }
-
-  .filter-btn:hover, .filter-btn.active {
-    border-color: var(--green);
-    color: var(--green);
-  }
 
   .priority-high { border-left: 3px solid var(--red); }
   .priority-med  { border-left: 3px solid var(--amber); }
   .priority-low  { border-left: 3px solid var(--green); }
 
-  .legend {
-    display: flex;
-    gap: 20px;
-    margin-top: 16px;
-    flex-wrap: wrap;
-  }
+  .legend { display: flex; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); }
+  .legend-line { width: 30px; height: 3px; border-radius: 2px; }
 
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .legend-line {
-    width: 30px;
-    height: 3px;
-    border-radius: 2px;
-  }
+  .jst-pill { display: inline-block; background: #050f1a; border: 1px solid var(--blue); color: var(--blue); padding: 1px 7px; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 1px; margin-left: 5px; vertical-align: middle; }
+  .new-tag { display: inline-block; background: #0a1a2a; border: 1px solid #336699; color: #7ab3d4; padding: 1px 5px; font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px; margin-left: 4px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -327,7 +98,7 @@
     <div class="logo">AGRI<span>SHIELD</span></div>
     <div class="subtitle">ESP32 + SIM800L Dual-Mode IoT Tomato Monitor // Akure, Nigeria</div>
   </div>
-  <div class="badge">REV 1.0 // FIELD TRIAL</div>
+  <div class="badge">REV 1.2 // JST-XH SOIL CONNECTORS</div>
 </header>
 
 <div class="tabs">
@@ -342,7 +113,6 @@
   <div class="schematic-wrap">
     <svg viewBox="0 0 1100 820" width="100%" style="min-width:900px; background:#070f07; display:block;">
 
-      <!-- Grid dots -->
       <defs>
         <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
           <circle cx="10" cy="10" r="0.5" fill="#0d1f0d"/>
@@ -356,7 +126,6 @@
         <text x="80" y="52" fill="#ff9800" font-size="10" text-anchor="middle" font-weight="bold">SOLAR PANEL</text>
         <text x="80" y="66" fill="#888" font-size="9" text-anchor="middle">5V 2W Flexible</text>
         <text x="80" y="79" fill="#888" font-size="9" text-anchor="middle">USB ~400mA</text>
-        <!-- + terminal -->
         <line x1="80" y1="90" x2="80" y2="108" stroke="#ff5252" stroke-width="2"/>
         <circle cx="80" cy="108" r="3" fill="#ff5252"/>
         <text x="90" y="104" fill="#ff9800" font-size="8">5V+</text>
@@ -368,12 +137,10 @@
         <text x="80" y="150" fill="#00e676" font-size="10" text-anchor="middle" font-weight="bold">TP4056</text>
         <text x="80" y="163" fill="#888" font-size="8" text-anchor="middle">Li-ion Charger</text>
         <text x="80" y="175" fill="#888" font-size="8" text-anchor="middle">1A Max</text>
-        <!-- Pins -->
         <text x="38" y="145" fill="#aaa" font-size="7">IN+</text>
         <text x="38" y="185" fill="#aaa" font-size="7">IN-</text>
         <text x="105" y="145" fill="#aaa" font-size="7">OUT+</text>
         <text x="105" y="185" fill="#aaa" font-size="7">OUT-</text>
-        <!-- wire from solar -->
         <line x1="80" y1="108" x2="80" y2="130" stroke="#ff9800" stroke-width="2"/>
       </g>
 
@@ -383,7 +150,6 @@
         <text x="220" y="133" fill="#ff5252" font-size="10" text-anchor="middle" font-weight="bold">18650</text>
         <text x="220" y="146" fill="#888" font-size="8" text-anchor="middle">3.7V 3400mAh</text>
         <text x="220" y="158" fill="#888" font-size="8" text-anchor="middle">Protected Li-ion</text>
-        <!-- Battery symbol -->
         <line x1="195" y1="168" x2="205" y2="168" stroke="#ff5252" stroke-width="3"/>
         <line x1="208" y1="164" x2="208" y2="172" stroke="#ff5252" stroke-width="1.5"/>
         <line x1="211" y1="166" x2="211" y2="170" stroke="#ff5252" stroke-width="1.5"/>
@@ -394,28 +160,15 @@
         <line x1="130" y1="138" x2="170" y2="138" stroke="#ff5252" stroke-width="2"/>
         <line x1="130" y1="180" x2="170" y2="182" stroke="#333" stroke-width="1.5"/>
         <line x1="170" y1="182" x2="270" y2="182" stroke="#333" stroke-width="1.5"/>
-        <!-- GND bus line -->
+        <!-- GND bus -->
         <line x1="270" y1="182" x2="270" y2="750" stroke="#222" stroke-width="1.5" stroke-dasharray="4,3"/>
         <text x="275" y="760" fill="#444" font-size="8">GND BUS</text>
       </g>
 
-      <!-- ===== KCD3 ROCKER SWITCH ===== -->
-      <g id="switch">
-        <rect x="330" y="100" width="90" height="55" rx="2" fill="#0a1a0a" stroke="#00b0ff" stroke-width="1.5"/>
-        <text x="375" y="120" fill="#00b0ff" font-size="9" text-anchor="middle" font-weight="bold">KCD3</text>
-        <text x="375" y="132" fill="#888" font-size="8" text-anchor="middle">Waterproof Rocker</text>
-        <text x="375" y="143" fill="#888" font-size="8" text-anchor="middle">IP65 Master Power</text>
-        <!-- Pins -->
-        <text x="335" y="118" fill="#aaa" font-size="7">P1+</text>
-        <text x="335" y="142" fill="#aaa" font-size="7">P3-</text>
-        <text x="395" y="118" fill="#aaa" font-size="7">P2○</text>
-        <!-- battery to switch -->
-        <line x1="270" y1="122" x2="330" y2="122" stroke="#ff5252" stroke-width="2"/>
-        <line x1="270" y1="122" x2="270" y2="125" stroke="#ff5252" stroke-width="2"/>
-        <line x1="220" y1="110" x2="220" y2="95" stroke="#ff5252" stroke-width="2"/>
-        <line x1="220" y1="95" x2="340" y2="95" stroke="#ff5252" stroke-width="2"/>
-        <line x1="340" y1="95" x2="340" y2="100" stroke="#ff5252" stroke-width="2"/>
-      </g>
+      <!-- ===== BATTERY+ DIRECT TO MT3608 (no switch) ===== -->
+      <line x1="220" y1="110" x2="220" y2="92" stroke="#ff5252" stroke-width="2"/>
+      <line x1="220" y1="92" x2="480" y2="92" stroke="#ff5252" stroke-width="2"/>
+      <text x="345" y="86" fill="#ff5252" font-size="8" text-anchor="middle">BATT+ → MT3608 VIN</text>
 
       <!-- ===== MT3608 BOOST ===== -->
       <g id="mt3608">
@@ -424,8 +177,6 @@
         <text x="530" y="123" fill="#888" font-size="8" text-anchor="middle">Boost 5V Fixed</text>
         <text x="530" y="135" fill="#888" font-size="8" text-anchor="middle">3V–5V → 5V</text>
         <text x="530" y="147" fill="#888" font-size="8" text-anchor="middle">1A continuous</text>
-        <!-- Switch to MT3608 -->
-        <line x1="420" y1="115" x2="480" y2="115" stroke="#ff5252" stroke-width="2"/>
         <text x="488" y="100" fill="#aaa" font-size="7">VIN+</text>
         <text x="560" y="100" fill="#aaa" font-size="7">VOUT+</text>
       </g>
@@ -436,68 +187,50 @@
         <text x="690" y="82" fill="#00e676" font-size="11" text-anchor="middle" font-weight="bold">ESP32</text>
         <text x="690" y="95" fill="#888" font-size="8" text-anchor="middle">DevKit V1</text>
         <text x="690" y="107" fill="#888" font-size="8" text-anchor="middle">Wi-Fi + Bluetooth</text>
-
-        <!-- Left pins (inputs/outputs) -->
-        <!-- Vin -->
+        <!-- Left pins -->
         <line x1="610" y1="125" x2="620" y2="125" stroke="#ff5252" stroke-width="2"/>
         <text x="625" y="122" fill="#aaa" font-size="7">Vin</text>
-        <!-- GND -->
         <line x1="610" y1="140" x2="620" y2="140" stroke="#333" stroke-width="1.5"/>
         <text x="625" y="137" fill="#444" font-size="7">GND</text>
-        <!-- 3.3V out -->
         <line x1="620" y1="155" x2="610" y2="155" stroke="#76ff03" stroke-width="1.5"/>
         <text x="625" y="152" fill="#aaa" font-size="7">3.3V</text>
-        <!-- GPIO 4 -->
         <line x1="620" y1="175" x2="610" y2="175" stroke="#ffeb3b" stroke-width="1.5"/>
         <text x="625" y="172" fill="#aaa" font-size="7">G4</text>
-        <!-- GPIO 5 -->
         <line x1="620" y1="190" x2="610" y2="190" stroke="#ffeb3b" stroke-width="1.5"/>
         <text x="625" y="187" fill="#aaa" font-size="7">G5</text>
-        <!-- GPIO 34 -->
         <line x1="620" y1="205" x2="610" y2="205" stroke="#ffeb3b" stroke-width="1.5"/>
         <text x="625" y="202" fill="#aaa" font-size="7">G34</text>
-        <!-- GPIO 35 -->
         <line x1="620" y1="220" x2="610" y2="220" stroke="#ffeb3b" stroke-width="1.5"/>
         <text x="625" y="217" fill="#aaa" font-size="7">G35</text>
-        <!-- GPIO 21 -->
         <line x1="620" y1="240" x2="610" y2="240" stroke="#e040fb" stroke-width="1.5"/>
         <text x="625" y="237" fill="#aaa" font-size="7">G21</text>
-
         <!-- Right pins -->
-        <!-- GPIO 16 RX2 -->
         <line x1="760" y1="175" x2="770" y2="175" stroke="#00e5ff" stroke-width="1.5"/>
         <text x="730" y="172" fill="#aaa" font-size="7">G16(RX2)</text>
-        <!-- GPIO 17 TX2 -->
         <line x1="760" y1="195" x2="770" y2="195" stroke="#00e5ff" stroke-width="1.5"/>
         <text x="730" y="192" fill="#aaa" font-size="7">G17(TX2)</text>
-
         <!-- Chip icon -->
         <rect x="650" y="220" width="80" height="60" rx="2" fill="#0a150a" stroke="#1a3a1a" stroke-width="1"/>
         <text x="690" y="255" fill="#1a4a1a" font-size="20" text-anchor="middle">⚡</text>
-
         <!-- MT3608 to ESP32 Vin -->
         <line x1="580" y1="115" x2="580" y2="125" stroke="#ff5252" stroke-width="2"/>
         <line x1="580" y1="125" x2="610" y2="125" stroke="#ff5252" stroke-width="2"/>
         <text x="590" y="112" fill="#ff5252" font-size="8">5V</text>
       </g>
 
-      <!-- ===== DHT22 SENSORS ===== -->
-      <!-- DHT22 #1 -->
+      <!-- ===== DHT22 SENSORS (direct wire, no JST) ===== -->
       <g id="dht22-1">
         <rect x="430" y="200" width="80" height="55" rx="2" fill="#0a1a0a" stroke="#ffeb3b" stroke-width="1.5"/>
         <text x="470" y="218" fill="#ffeb3b" font-size="9" text-anchor="middle" font-weight="bold">DHT22 #1</text>
         <text x="470" y="229" fill="#888" font-size="8" text-anchor="middle">Temp/Humidity</text>
         <text x="470" y="240" fill="#888" font-size="8" text-anchor="middle">GPIO 4</text>
-        <!-- Pins -->
         <line x1="510" y1="215" x2="610" y2="175" stroke="#ffeb3b" stroke-width="1.5"/>
         <line x1="430" y1="215" x2="420" y2="215" stroke="#76ff03" stroke-width="1.5"/>
         <line x1="430" y1="245" x2="420" y2="245" stroke="#333" stroke-width="1"/>
-        <!-- 10k pull-up -->
         <text x="540" y="190" fill="#aaa" font-size="7">10kΩ↑</text>
         <circle cx="552" cy="183" r="3" fill="none" stroke="#aaa" stroke-width="1"/>
       </g>
 
-      <!-- DHT22 #2 -->
       <g id="dht22-2">
         <rect x="430" y="270" width="80" height="55" rx="2" fill="#0a1a0a" stroke="#ffeb3b" stroke-width="1.5"/>
         <text x="470" y="288" fill="#ffeb3b" font-size="9" text-anchor="middle" font-weight="bold">DHT22 #2</text>
@@ -510,27 +243,37 @@
         <circle cx="552" cy="261" r="3" fill="none" stroke="#aaa" stroke-width="1"/>
       </g>
 
-      <!-- ===== SOIL MOISTURE SENSORS ===== -->
-      <!-- Soil #1 -->
+      <!-- ===== SOIL MOISTURE SENSORS — JST-XH on cable entry ===== -->
       <g id="soil1">
         <rect x="430" y="350" width="80" height="55" rx="2" fill="#0a1a0a" stroke="#76ff03" stroke-width="1.5"/>
         <text x="470" y="368" fill="#76ff03" font-size="9" text-anchor="middle" font-weight="bold">SOIL #1</text>
         <text x="470" y="379" fill="#888" font-size="8" text-anchor="middle">Capacitive V1.2</text>
         <text x="470" y="390" fill="#888" font-size="8" text-anchor="middle">GPIO 34 (ADC)</text>
         <line x1="510" y1="365" x2="610" y2="205" stroke="#ffeb3b" stroke-width="1.5"/>
-        <line x1="430" y1="365" x2="420" y2="365" stroke="#76ff03" stroke-width="1.5"/>
-        <line x1="430" y1="395" x2="420" y2="395" stroke="#333" stroke-width="1"/>
+        <line x1="430" y1="365" x2="418" y2="365" stroke="#76ff03" stroke-width="1.5"/>
+        <line x1="430" y1="395" x2="418" y2="395" stroke="#333" stroke-width="1"/>
+        <!-- JST-XH connector symbol -->
+        <rect x="384" y="357" width="34" height="16" rx="1" fill="#050f1a" stroke="#00b0ff" stroke-width="1.2"/>
+        <line x1="389" y1="357" x2="389" y2="373" stroke="#00b0ff" stroke-width="0.8"/>
+        <line x1="393" y1="357" x2="393" y2="373" stroke="#00b0ff" stroke-width="0.8"/>
+        <line x1="397" y1="357" x2="397" y2="373" stroke="#00b0ff" stroke-width="0.8"/>
+        <text x="401" y="368" fill="#00b0ff" font-size="7" text-anchor="middle">JST-XH</text>
       </g>
 
-      <!-- Soil #2 -->
       <g id="soil2">
         <rect x="430" y="420" width="80" height="55" rx="2" fill="#0a1a0a" stroke="#76ff03" stroke-width="1.5"/>
         <text x="470" y="438" fill="#76ff03" font-size="9" text-anchor="middle" font-weight="bold">SOIL #2</text>
         <text x="470" y="449" fill="#888" font-size="8" text-anchor="middle">Capacitive V2.0</text>
         <text x="470" y="460" fill="#888" font-size="8" text-anchor="middle">GPIO 35 (ADC)</text>
         <line x1="510" y1="435" x2="610" y2="220" stroke="#ffeb3b" stroke-width="1.5"/>
-        <line x1="430" y1="435" x2="420" y2="435" stroke="#76ff03" stroke-width="1.5"/>
-        <line x1="430" y1="465" x2="420" y2="465" stroke="#333" stroke-width="1"/>
+        <line x1="430" y1="435" x2="418" y2="435" stroke="#76ff03" stroke-width="1.5"/>
+        <line x1="430" y1="465" x2="418" y2="465" stroke="#333" stroke-width="1"/>
+        <!-- JST-XH connector symbol -->
+        <rect x="384" y="427" width="34" height="16" rx="1" fill="#050f1a" stroke="#00b0ff" stroke-width="1.2"/>
+        <line x1="389" y1="427" x2="389" y2="443" stroke="#00b0ff" stroke-width="0.8"/>
+        <line x1="393" y1="427" x2="393" y2="443" stroke="#00b0ff" stroke-width="0.8"/>
+        <line x1="397" y1="427" x2="397" y2="443" stroke="#00b0ff" stroke-width="0.8"/>
+        <text x="401" y="438" fill="#00b0ff" font-size="7" text-anchor="middle">JST-XH</text>
       </g>
 
       <!-- 3.3V rail to sensors -->
@@ -538,49 +281,40 @@
       <line x1="420" y1="155" x2="420" y2="465" stroke="#76ff03" stroke-width="1.5" stroke-dasharray="3,3"/>
       <text x="405" y="340" fill="#76ff03" font-size="8" transform="rotate(-90,405,340)">3.3V SENSOR RAIL</text>
 
-      <!-- ===== MOSFET GATE DRIVER CIRCUIT ===== -->
-      <!-- 2N2222 NPN -->
+      <!-- ===== MOSFET GATE DRIVER ===== -->
       <g id="npn2222">
         <rect x="840" y="320" width="80" height="65" rx="2" fill="#0a1a0a" stroke="#e040fb" stroke-width="1.5"/>
         <text x="880" y="338" fill="#e040fb" font-size="9" text-anchor="middle" font-weight="bold">2N2222</text>
         <text x="880" y="350" fill="#888" font-size="8" text-anchor="middle">NPN Transistor</text>
         <text x="880" y="362" fill="#888" font-size="8" text-anchor="middle">Gate Driver</text>
-        <!-- E, B, C labels -->
         <text x="845" y="378" fill="#aaa" font-size="7">E</text>
         <text x="858" y="378" fill="#aaa" font-size="7">B</text>
         <text x="875" y="378" fill="#aaa" font-size="7">C</text>
-        <!-- Transistor symbol approximation -->
         <line x1="870" y1="340" x2="870" y2="370" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="870" y1="348" x2="882" y2="340" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="870" y1="362" x2="882" y2="370" stroke="#e040fb" stroke-width="1.5"/>
-        <!-- arrow for NPN -->
         <polygon points="880,370 872,365 877,363" fill="#e040fb"/>
       </g>
 
-      <!-- 1kΩ base resistor -->
       <g id="r-base">
         <rect x="760" y="348" width="35" height="14" rx="1" fill="#0a1a0a" stroke="#aaa" stroke-width="1"/>
         <text x="777" y="358" fill="#aaa" font-size="8" text-anchor="middle">1kΩ</text>
-        <!-- ESP32 G21 to resistor -->
         <line x1="760" y1="240" x2="750" y2="240" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="750" y1="240" x2="750" y2="355" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="750" y1="355" x2="760" y2="355" stroke="#e040fb" stroke-width="1.5"/>
-        <!-- resistor to 2N2222 base -->
         <line x1="795" y1="355" x2="860" y2="355" stroke="#e040fb" stroke-width="1.5"/>
       </g>
 
-      <!-- 2N2222 to GND (emitter) -->
       <line x1="848" y1="385" x2="848" y2="410" stroke="#333" stroke-width="1.5"/>
       <line x1="848" y1="410" x2="270" y2="410" stroke="#222" stroke-width="1.5" stroke-dasharray="3,2"/>
       <text x="560" y="405" fill="#333" font-size="7">GND</text>
 
-      <!-- ===== IRF9540 P-MOSFET ===== -->
+      <!-- ===== IRF540 N-MOSFET ===== -->
       <g id="mosfet">
         <rect x="840" y="180" width="90" height="100" rx="2" fill="#0a1a0a" stroke="#e040fb" stroke-width="2"/>
-        <text x="885" y="200" fill="#e040fb" font-size="9" text-anchor="middle" font-weight="bold">IRF9540</text>
-        <text x="885" y="212" fill="#888" font-size="8" text-anchor="middle">P-Channel MOSFET</text>
+        <text x="885" y="200" fill="#e040fb" font-size="9" text-anchor="middle" font-weight="bold">IRF540</text>
+        <text x="885" y="212" fill="#888" font-size="8" text-anchor="middle">N-Channel MOSFET</text>
         <text x="885" y="224" fill="#888" font-size="8" text-anchor="middle">SIM800L Switch</text>
-        <!-- MOSFET symbol simplified -->
         <line x1="870" y1="235" x2="870" y2="265" stroke="#e040fb" stroke-width="2"/>
         <line x1="860" y1="240" x2="870" y2="240" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="860" y1="260" x2="870" y2="260" stroke="#e040fb" stroke-width="1.5"/>
@@ -588,16 +322,16 @@
         <text x="855" y="228" fill="#aaa" font-size="7">S</text>
         <text x="855" y="278" fill="#aaa" font-size="7">D</text>
         <text x="840" y="252" fill="#aaa" font-size="7">G</text>
-        <!-- Gate from 2N2222 collector -->
         <line x1="878" y1="320" x2="878" y2="295" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="878" y1="295" x2="855" y2="295" stroke="#e040fb" stroke-width="1.5"/>
         <line x1="855" y1="270" x2="855" y2="295" stroke="#e040fb" stroke-width="1.5"/>
-        <!-- Source from Battery+ -->
+        <!-- Source direct from battery+ (no switch intermediary) -->
         <line x1="870" y1="235" x2="870" y2="180" stroke="#ff5252" stroke-width="2"/>
-        <line x1="870" y1="180" x2="320" y2="180" stroke="#ff5252" stroke-width="2"/>
-        <line x1="320" y1="180" x2="320" y2="140" stroke="#ff5252" stroke-width="2"/>
-        <line x1="270" y1="140" x2="320" y2="140" stroke="#ff5252" stroke-width="2"/>
-        <text x="580" y="175" fill="#ff5252" font-size="8">BATT+ → MOSFET SOURCE</text>
+        <line x1="870" y1="180" x2="270" y2="180" stroke="#ff5252" stroke-width="2"/>
+        <line x1="270" y1="180" x2="270" y2="140" stroke="#ff5252" stroke-width="2"/>
+        <line x1="220" y1="140" x2="270" y2="140" stroke="#ff5252" stroke-width="2"/>
+        <line x1="220" y1="110" x2="220" y2="140" stroke="#ff5252" stroke-width="2"/>
+        <text x="565" y="175" fill="#ff5252" font-size="8">BATT+ → MOSFET SOURCE</text>
       </g>
 
       <!-- ===== SIM800L ===== -->
@@ -606,8 +340,6 @@
         <text x="910" y="512" fill="#ff1744" font-size="11" text-anchor="middle" font-weight="bold">SIM800L</text>
         <text x="910" y="525" fill="#888" font-size="8" text-anchor="middle">GSM Module + Antenna</text>
         <text x="910" y="537" fill="#ff9800" font-size="8" text-anchor="middle">⚠ 2A PEAK CURRENT</text>
-
-        <!-- Pins -->
         <text x="847" y="558" fill="#aaa" font-size="7">VCC</text>
         <text x="847" y="573" fill="#aaa" font-size="7">GND</text>
         <text x="847" y="588" fill="#aaa" font-size="7">RX</text>
@@ -616,8 +348,6 @@
         <line x1="840" y1="569" x2="820" y2="569" stroke="#333" stroke-width="1.5"/>
         <line x1="840" y1="584" x2="820" y2="584" stroke="#00e5ff" stroke-width="1.5"/>
         <line x1="840" y1="599" x2="820" y2="599" stroke="#00e5ff" stroke-width="1.5"/>
-
-        <!-- Antenna icon -->
         <text x="910" y="590" fill="#1a3a1a" font-size="30" text-anchor="middle">📡</text>
         <text x="910" y="610" fill="#333" font-size="8" text-anchor="middle">External Antenna</text>
       </g>
@@ -636,35 +366,26 @@
         <text x="804" y="558" fill="#ffab00" font-size="7" text-anchor="middle">µF</text>
         <text x="804" y="568" fill="#888" font-size="6" text-anchor="middle">10V</text>
         <text x="797" y="580" fill="#ff5252" font-size="8">+</text>
-        <!-- cap to VCC -->
         <line x1="804" y1="530" x2="804" y2="520" stroke="#ff5252" stroke-width="1.5"/>
         <line x1="804" y1="520" x2="870" y2="520" stroke="#ff5252" stroke-width="1.5"/>
         <line x1="870" y1="520" x2="870" y2="490" stroke="#ff5252" stroke-width="1.5"/>
-        <!-- cap to GND -->
         <line x1="804" y1="580" x2="804" y2="600" stroke="#333" stroke-width="1.5"/>
         <line x1="804" y1="600" x2="270" y2="600" stroke="#222" stroke-width="1" stroke-dasharray="3,2"/>
         <text x="810" y="590" fill="#ffab00" font-size="7">⟵ WITHIN 2cm!</text>
       </g>
 
-      <!-- ===== UART CONNECTIONS ===== -->
-      <!-- Voltage Divider on TX line -->
-      <!-- ESP32 TX2 (G17) → 1kΩ → node → 2kΩ → GND, node → SIM800L RX -->
+      <!-- ===== UART — voltage divider on TX ===== -->
       <g id="vdiv">
-        <!-- G17 out -->
         <line x1="770" y1="195" x2="800" y2="195" stroke="#00e5ff" stroke-width="1.5"/>
-        <!-- 1kΩ -->
         <rect x="800" y="188" width="30" height="14" rx="1" fill="#0a1a0a" stroke="#aaa" stroke-width="1"/>
         <text x="815" y="198" fill="#aaa" font-size="8" text-anchor="middle">1kΩ</text>
-        <!-- node -->
         <circle cx="835" cy="195" r="3" fill="#00e5ff"/>
         <line x1="830" y1="195" x2="835" y2="195" stroke="#00e5ff" stroke-width="1.5"/>
-        <!-- 2kΩ to GND -->
         <line x1="835" y1="195" x2="835" y2="212" stroke="#00e5ff" stroke-width="1.5"/>
         <rect x="820" y="212" width="30" height="14" rx="1" fill="#0a1a0a" stroke="#aaa" stroke-width="1"/>
         <text x="835" y="222" fill="#aaa" font-size="8" text-anchor="middle">2kΩ</text>
         <line x1="835" y1="226" x2="835" y2="240" stroke="#333" stroke-width="1.5"/>
         <line x1="835" y1="240" x2="270" y2="240" stroke="#222" stroke-width="1" stroke-dasharray="3,2"/>
-        <!-- to SIM800L RX -->
         <line x1="835" y1="195" x2="835" y2="180" stroke="#00e5ff" stroke-width="1.5"/>
         <line x1="835" y1="180" x2="820" y2="180" stroke="#00e5ff" stroke-width="1.5"/>
         <line x1="820" y1="180" x2="820" y2="584" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4,3"/>
@@ -672,7 +393,6 @@
         <text x="822" y="400" fill="#00e5ff" font-size="7" transform="rotate(-90,822,400)">TX→RX (via VDiv ~2.8V)</text>
       </g>
 
-      <!-- ESP32 RX2 (G16) direct to SIM800L TX -->
       <line x1="770" y1="175" x2="808" y2="175" stroke="#00e5ff" stroke-width="1.5"/>
       <line x1="808" y1="175" x2="808" y2="165" stroke="#00e5ff" stroke-width="1.5"/>
       <line x1="808" y1="165" x2="810" y2="165" stroke="#00e5ff" stroke-width="1.5"/>
@@ -680,7 +400,6 @@
       <line x1="810" y1="599" x2="840" y2="599" stroke="#00e5ff" stroke-width="1.5"/>
       <text x="812" y="480" fill="#00e5ff" font-size="7" transform="rotate(-90,812,480)">RX←TX (3.3V direct)</text>
 
-      <!-- SIM800L GND to common GND -->
       <line x1="840" y1="569" x2="820" y2="569" stroke="#333" stroke-width="1.5"/>
       <line x1="820" y1="569" x2="820" y2="570" stroke="#333" stroke-width="1.5"/>
       <line x1="820" y1="570" x2="270" y2="570" stroke="#222" stroke-width="1" stroke-dasharray="3,2"/>
@@ -693,8 +412,7 @@
       <line x1="260" y1="775" x2="280" y2="775" stroke="#333" stroke-width="1.5"/>
       <line x1="265" y1="780" x2="275" y2="780" stroke="#333" stroke-width="1"/>
 
-      <!-- ===== LABELS / ANNOTATIONS ===== -->
-      <!-- Warning boxes -->
+      <!-- ===== ANNOTATIONS ===== -->
       <rect x="20" y="750" width="200" height="50" rx="2" fill="#1a0505" stroke="#ff1744" stroke-width="1"/>
       <text x="120" y="766" fill="#ff1744" font-size="9" text-anchor="middle" font-weight="bold">⚠ CRITICAL WARNINGS</text>
       <text x="30" y="780" fill="#ff5252" font-size="8">1. SIM800L NEVER from ESP32 5V pin</text>
@@ -702,26 +420,31 @@
 
       <rect x="580" y="750" width="200" height="50" rx="2" fill="#1a1500" stroke="#ffab00" stroke-width="1"/>
       <text x="680" y="766" fill="#ffab00" font-size="9" text-anchor="middle" font-weight="bold">⚠ SLEEP MODE</text>
-      <text x="590" y="780" fill="#ff9800" font-size="8">ESP32 GPIO21=HIGH → 2N2222 ON → MOSFET OFF</text>
+      <text x="590" y="780" fill="#ff9800" font-size="8">ESP32 GPIO21=LOW → 2N2222 OFF → Gate LOW → N-MOSFET OFF</text>
       <text x="590" y="791" fill="#ff9800" font-size="8">= SIM800L POWERED OFF (saves power)</text>
 
-      <!-- Legend -->
-      <rect x="840" y="660" width="240" height="85" rx="2" fill="#0a1a0a" stroke="#1a3a1a" stroke-width="1"/>
-      <text x="960" y="675" fill="#00e676" font-size="9" text-anchor="middle" font-family="Share Tech Mono" font-weight="bold">WIRE LEGEND</text>
-      <line x1="850" y1="690" x2="880" y2="690" stroke="#ff5252" stroke-width="2"/>
-      <text x="886" y="693" fill="#ccc" font-size="8">POWER (BATT+/5V)</text>
-      <line x1="850" y1="702" x2="880" y2="702" stroke="#333" stroke-width="2"/>
-      <text x="886" y="705" fill="#ccc" font-size="8">GROUND (GND)</text>
-      <line x1="850" y1="714" x2="880" y2="714" stroke="#00e5ff" stroke-width="1.5"/>
-      <text x="886" y="717" fill="#ccc" font-size="8">UART (SIM800L)</text>
-      <line x1="850" y1="726" x2="880" y2="726" stroke="#ffeb3b" stroke-width="1.5"/>
-      <text x="886" y="729" fill="#ccc" font-size="8">SENSOR SIGNALS</text>
-      <line x1="850" y1="738" x2="880" y2="738" stroke="#e040fb" stroke-width="1.5"/>
-      <text x="886" y="741" fill="#ccc" font-size="8">MOSFET CONTROL</text>
+      <!-- ===== LEGEND ===== -->
+      <rect x="840" y="650" width="240" height="96" rx="2" fill="#0a1a0a" stroke="#1a3a1a" stroke-width="1"/>
+      <text x="960" y="665" fill="#00e676" font-size="9" text-anchor="middle" font-family="Share Tech Mono" font-weight="bold">WIRE LEGEND</text>
+      <line x1="850" y1="679" x2="880" y2="679" stroke="#ff5252" stroke-width="2"/>
+      <text x="886" y="682" fill="#ccc" font-size="8">POWER (BATT+/5V)</text>
+      <line x1="850" y1="691" x2="880" y2="691" stroke="#333" stroke-width="2"/>
+      <text x="886" y="694" fill="#ccc" font-size="8">GROUND (GND)</text>
+      <line x1="850" y1="703" x2="880" y2="703" stroke="#00e5ff" stroke-width="1.5"/>
+      <text x="886" y="706" fill="#ccc" font-size="8">UART (SIM800L)</text>
+      <line x1="850" y1="715" x2="880" y2="715" stroke="#ffeb3b" stroke-width="1.5"/>
+      <text x="886" y="718" fill="#ccc" font-size="8">SENSOR SIGNALS</text>
+      <line x1="850" y1="727" x2="880" y2="727" stroke="#e040fb" stroke-width="1.5"/>
+      <text x="886" y="730" fill="#ccc" font-size="8">MOSFET CONTROL</text>
+      <rect x="850" y="734" width="30" height="9" rx="1" fill="#050f1a" stroke="#00b0ff" stroke-width="1"/>
+      <line x1="853" y1="734" x2="853" y2="743" stroke="#00b0ff" stroke-width="0.8"/>
+      <line x1="857" y1="734" x2="857" y2="743" stroke="#00b0ff" stroke-width="0.8"/>
+      <line x1="861" y1="734" x2="861" y2="743" stroke="#00b0ff" stroke-width="0.8"/>
+      <text x="886" y="742" fill="#00b0ff" font-size="8">JST-XH (soil only)</text>
 
-      <!-- Title box -->
+      <!-- ===== TITLE BOX ===== -->
       <rect x="780" y="20" width="300" height="40" rx="2" fill="#051205" stroke="#00e676" stroke-width="1"/>
-      <text x="930" y="37" fill="#00e676" font-size="11" text-anchor="middle" font-family="Orbitron">AGRISH​IELD SCHEMATIC v1.0</text>
+      <text x="930" y="37" fill="#00e676" font-size="11" text-anchor="middle" font-family="Orbitron">AGRISHIELD SCHEMATIC v1.2</text>
       <text x="930" y="52" fill="#888" font-size="8" text-anchor="middle">ESP32 + SIM800L IoT Node // Akure, Nigeria</text>
 
     </svg>
@@ -740,31 +463,29 @@
         <tr class="priority-high"><td>Solar Panel USB</td><td>GND</td><td>TP4056</td><td>IN-</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#333"></div>Black</div></td><td></td></tr>
         <tr class="priority-high"><td>TP4056</td><td>OUT+</td><td>18650 Battery</td><td>+</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red</div></td><td class="note">Charge to battery</td></tr>
         <tr class="priority-high"><td>TP4056</td><td>OUT-</td><td>18650 Battery</td><td>-</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#333"></div>Black</div></td><td></td></tr>
-        <tr><td>18650 Battery</td><td>+</td><td>KCD3 Switch</td><td>Pin 1 (+)</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red</div></td><td class="note">Master power control</td></tr>
-        <tr><td>KCD3 Switch</td><td>Pin 2 (○)</td><td>MT3608 Boost</td><td>VIN+</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red</div></td><td class="note">Battery voltage ~3.7–4.2V in</td></tr>
-        <tr><td>KCD3 Switch</td><td>Pin 3 (-)</td><td>Common GND</td><td>-</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#333"></div>Black</div></td><td class="note">LED indicator ground</td></tr>
+        <tr class="priority-high"><td>18650 Battery</td><td>+</td><td>MT3608 Boost</td><td>VIN+</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red</div></td><td class="note">Battery voltage ~3.7–4.2V direct</td></tr>
         <tr class="priority-high"><td>MT3608 Boost</td><td>VOUT+</td><td>ESP32</td><td>Vin (5V)</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red</div></td><td class="ok">✓ Set MT3608 to 5.0V</td></tr>
         <tr><td>MT3608 Boost</td><td>VOUT-</td><td>Common GND</td><td>-</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#333"></div>Black</div></td><td></td></tr>
-        <tr class="priority-high"><td>18650 Battery</td><td>+</td><td>IRF9540 MOSFET</td><td>Source (S)</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red (heavy)</div></td><td class="warn">⚠ 2A peak – use 22AWG min</td></tr>
-        <tr class="priority-high"><td>IRF9540 MOSFET</td><td>Drain (D)</td><td>SIM800L</td><td>VCC</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red (heavy)</div></td><td class="warn">⚠ Direct battery voltage 3.7–4.2V</td></tr>
+        <tr class="priority-high"><td>18650 Battery</td><td>+</td><td>IRF540 MOSFET</td><td>Drain (D)</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red (heavy)</div></td><td class="warn">⚠ 2A peak – use 22AWG min</td></tr>
+        <tr class="priority-high"><td>IRF540 MOSFET</td><td>Source (S)</td><td>SIM800L</td><td>VCC</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#ff5252"></div>Red (heavy)</div></td><td class="warn">⚠ Direct battery voltage 3.7–4.2V</td></tr>
         <tr><td>SIM800L</td><td>GND</td><td>Common GND</td><td>-</td><td><div class="wire-color-cell"><div class="color-swatch" style="background:#333"></div>Black</div></td><td class="warn">⚠ Connect ALL GND points together</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="wire-group" style="margin-top:24px">
-    <div class="section-title">🔌 MOSFET GATE DRIVER (P-Channel Turn-Off)</div>
+    <div class="section-title">🔌 MOSFET GATE DRIVER (N-Channel)</div>
     <div class="wire-label"><div class="wire-dot" style="background:#e040fb"></div>GATE CONTROL (PURPLE)</div>
     <table>
       <thead><tr><th>From</th><th>Pin/Connection</th><th>To</th><th>Pin/Connection</th><th>Notes</th></tr></thead>
       <tbody>
         <tr class="priority-high"><td>ESP32</td><td>GPIO 21</td><td>1kΩ Resistor</td><td>Pin 1</td><td class="note">Base current limiter</td></tr>
         <tr class="priority-high"><td>1kΩ Resistor</td><td>Pin 2</td><td>2N2222 NPN</td><td>Base (B)</td><td class="note">Drive ~3.3mA into base</td></tr>
-        <tr class="priority-high"><td>2N2222 NPN</td><td>Collector (C)</td><td>IRF9540 Gate (G)</td><td>Gate</td><td class="note">Gate pulled to GND when GPIO21=HIGH</td></tr>
+        <tr class="priority-high"><td>2N2222 NPN</td><td>Collector (C)</td><td>IRF540 Gate (G)</td><td>Gate</td><td class="note">Gate driven HIGH via 2N2222 collector pull-up</td></tr>
         <tr><td>2N2222 NPN</td><td>Emitter (E)</td><td>Common GND</td><td>-</td><td></td></tr>
         <tr><td colspan="4" style="background:#0d1a0d; color:#ffab00; font-family:'Share Tech Mono',monospace; font-size:11px; padding:10px">
-          Logic: GPIO21 HIGH → 2N2222 saturates → Gate pulled LOW → P-MOSFET conducts → SIM800L ON<br>
-          Logic: GPIO21 LOW → 2N2222 cuts off → Gate floats HIGH (= Vsource) → P-MOSFET OFF → SIM800L OFF (deep sleep)
+          Logic: GPIO21 HIGH → 2N2222 saturates → Gate driven HIGH → N-MOSFET conducts → SIM800L ON<br>
+          Logic: GPIO21 LOW → 2N2222 cuts off → Gate pulled LOW (= GND) → N-MOSFET OFF → SIM800L OFF (deep sleep)
         </td><td></td></tr>
       </tbody>
     </table>
@@ -777,7 +498,7 @@
       <thead><tr><th>ESP32 Pin</th><th>Direction</th><th>Connection</th><th>SIM800L Pin</th><th>Notes</th></tr></thead>
       <tbody>
         <tr><td><span class="pin-badge">GPIO 16 (RX2)</span></td><td>← INPUT</td><td>Direct wire</td><td><span class="pin-badge">TX</span></td><td class="ok">✓ SIM800L TX is 3.3V — safe direct connect</td></tr>
-        <tr class="priority-high"><td><span class="pin-badge">GPIO 17 (TX2)</span></td><td>→ OUTPUT</td><td><b>1kΩ → node → SIM800L RX</b><br><small style="color:#888">2kΩ from node → GND</small></td><td><span class="pin-badge">RX</span></td><td class="warn">⚠ Voltage divider REQUIRED! 3.3V → ~2.8V</td></tr>
+        <tr class="priority-high"><td><span class="pin-badge">GPIO 17 (TX2)</span></td><td>→ OUTPUT</td><td><b>1kΩ → node → SIM800L RX</b><br><small style="color:#888">2kΩ from node → GND</small></td><td><span class="pin-badge">RX</span></td><td class="warn">⚠ Voltage divider REQUIRED! 3.3V → ~2.2V</td></tr>
         <tr><td><span class="pin-badge">GND</span></td><td>—</td><td>Direct wire</td><td><span class="pin-badge">GND</span></td><td class="warn">⚠ Common ground mandatory for UART</td></tr>
       </tbody>
     </table>
@@ -792,14 +513,27 @@
     <table>
       <thead><tr><th>ESP32 Pin</th><th>Sensor</th><th>Sensor Pin</th><th>Additional</th><th>Notes</th></tr></thead>
       <tbody>
-        <tr><td><span class="pin-badge">GPIO 34 (ADC1_CH6)</span></td><td>Capacitive Soil #1</td><td>SIG/AOUT</td><td>—</td><td class="note">Input-only pin, 0–3.3V analog</td></tr>
-        <tr><td><span class="pin-badge">GPIO 35 (ADC1_CH7)</span></td><td>Capacitive Soil #2</td><td>SIG/AOUT</td><td>—</td><td class="note">Input-only pin, 0–3.3V analog</td></tr>
+        <tr>
+          <td><span class="pin-badge">GPIO 34 (ADC1_CH6)</span></td>
+          <td>Capacitive Soil #1 <span class="jst-pill">JST-XH</span></td>
+          <td>SIG/AOUT</td><td>—</td>
+          <td class="note">Input-only pin, 0–3.3V analog</td>
+        </tr>
+        <tr>
+          <td><span class="pin-badge">GPIO 35 (ADC1_CH7)</span></td>
+          <td>Capacitive Soil #2 <span class="jst-pill">JST-XH</span></td>
+          <td>SIG/AOUT</td><td>—</td>
+          <td class="note">Input-only pin, 0–3.3V analog</td>
+        </tr>
         <tr><td><span class="pin-badge">GPIO 4</span></td><td>DHT22 #1</td><td>DATA</td><td>10kΩ pull-up to 3.3V</td><td class="note">One-wire protocol</td></tr>
         <tr><td><span class="pin-badge">GPIO 5</span></td><td>DHT22 #2</td><td>DATA</td><td>10kΩ pull-up to 3.3V</td><td class="note">One-wire protocol</td></tr>
         <tr><td><span class="pin-badge">3.3V</span></td><td>All 4 Sensors</td><td>VCC</td><td>—</td><td class="ok">✓ All sensors 3.3V compatible</td></tr>
         <tr><td><span class="pin-badge">GND</span></td><td>All 4 Sensors</td><td>GND</td><td>—</td><td class="note">Common ground bus</td></tr>
       </tbody>
     </table>
+    <div style="background:#050f1a; border:1px solid #1a3a1a; border-left: 3px solid #00b0ff; padding:10px 14px; margin-top:12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:#b3e5fc; line-height:1.6">
+      REV 1.2 — JST-XH 2.54mm connectors on Soil #1 and Soil #2 cable entries only. Keyed &amp; locking — prevents reverse polarity during field sensor swaps. All other connections remain direct wire.
+    </div>
   </div>
 
   <div class="wire-group" style="margin-top:24px">
@@ -808,11 +542,8 @@
       <thead><tr><th>Component</th><th>Pin +</th><th>Connection +</th><th>Pin -</th><th>Connection -</th><th>Constraint</th></tr></thead>
       <tbody>
         <tr class="priority-high">
-          <td>1000µF 10V Electrolytic</td>
-          <td>+ (long lead)</td>
-          <td>SIM800L VCC</td>
-          <td>- (short lead)</td>
-          <td>SIM800L GND</td>
+          <td>1000µF 10V Electrolytic</td><td>+ (long lead)</td><td>SIM800L VCC</td>
+          <td>- (short lead)</td><td>SIM800L GND</td>
           <td class="warn">⚠ Within 2cm of SIM800L VCC/GND pins!</td>
         </tr>
       </tbody>
@@ -861,7 +592,7 @@
     <div class="budget-row"><span>Wake cycles per day</span><span class="budget-val">96 cycles (every 15 min)</span></div>
     <div class="budget-row"><span>Active time per cycle</span><span class="budget-val">~30 sec (0.5 min)</span></div>
     <div class="budget-row"><span>Total active per day</span><span class="budget-val">96 × 0.5 min = 48 min</span></div>
-    <div class="budget-row"><span>Total sleep per day</span><span class="budget-row"><span></span><span class="budget-val">1392 min</span></div>
+    <div class="budget-row"><span>Total sleep per day</span><span class="budget-val">1392 min</span></div>
     <div class="budget-row"><span>Active charge/day</span><span class="budget-val">200mA × 0.8h = 160 mAh</span></div>
     <div class="budget-row"><span>Sleep charge/day</span><span class="budget-val">3.05mA × 23.2h = 70.8 mAh</span></div>
     <div class="budget-row budget-total"><span>TOTAL DAILY CONSUMPTION</span><span class="budget-val">~231 mAh/day</span></div>
@@ -883,9 +614,9 @@
     <div>Battery-only runtime:       <span class="highlight">3400 / 231 = ~14.7 days (no sun)</span></div>
     <div>With solar (avg Akure):     <span class="highlight">INDEFINITE ✓ (harvest >> consumption)</span></div>
     <div>Cloudy day reserve:         <span class="highlight">3400 mAh ÷ 231 = 14+ days of backup</span></div>
-    <div> </div>
+    <div>&nbsp;</div>
     <div>── 4-WEEK FIELD TRIAL VERDICT ────────────────────────</div>
-    <div style="color:#00e676; font-size:15px">✅ PASSES 4-WEEK DEPLOYMENT</div>
+    <div style="color:#00e676; font-size:15px">✅ PASSES 2-WEEK DEPLOYMENT</div>
     <div>System will remain operational even with 14 consecutive</div>
     <div>days of zero solar input. Tropical sun in Akure provides</div>
     <div>6–7× the required daily energy. <span class="highlight">Highly robust power design.</span></div>
@@ -894,42 +625,53 @@
 
 <!-- ========== BOM ========== -->
 <div id="bom" class="page">
-  <div class="section-title">BILL OF MATERIALS</div>
+  <div class="section-title">BILL OF MATERIALS — REV 1.2</div>
   <table>
     <thead>
       <tr>
-        <th>#</th>
-        <th>Component</th>
-        <th>Model / Spec</th>
-        <th>Qty</th>
-        <th>Est. Unit Price</th>
-        <th>Priority</th>
-        <th>Mouser / AliExpress</th>
+        <th>#</th><th>Component</th><th>Model / Spec</th><th>Qty</th>
+        <th>Est. Unit Price</th><th>Priority</th><th>Mouser / AliExpress</th>
       </tr>
     </thead>
     <tbody>
-      <tr class="priority-high"><td>1</td><td>Microcontroller</td><td>ESP32 DevKit V1 (38-pin)</td><td>1</td><td class="budget-val">~$4–8</td><td class="warn">Critical</td><td style="font-size:11px; color:#888">Search: "ESP32 DevKit V1 38-pin"</td></tr>
-      <tr class="priority-high"><td>2</td><td>GSM Module</td><td>SIM800L + External Antenna</td><td>1</td><td class="budget-val">~$6–12</td><td class="warn">Critical</td><td style="font-size:11px; color:#888">Search: "SIM800L module antenna"</td></tr>
-      <tr class="priority-high"><td>3</td><td>Charge Controller</td><td>TP4056 18650 Module</td><td>1</td><td class="budget-val">~$0.5–1</td><td class="warn">Critical</td><td style="font-size:11px; color:#888">Mouser: 576-TP4056</td></tr>
-      <tr class="priority-high"><td>4</td><td>Battery</td><td>18650 Li-ion 3400mAh Protected</td><td>1</td><td class="budget-val">~$5–10</td><td class="warn">Critical</td><td style="font-size:11px; color:#888">Panasonic NCR18650B recommended</td></tr>
-      <tr><td>5</td><td>Boost Converter</td><td>MT3608 DC-DC 5V Fixed</td><td>1</td><td class="budget-val">~$1–2</td><td class="note">High</td><td style="font-size:11px; color:#888">Search: "MT3608 boost module 5V"</td></tr>
-      <tr><td>6</td><td>Solar Panel</td><td>5V 2W Flexible USB</td><td>1</td><td class="budget-val">~$8–15</td><td class="note">High</td><td style="font-size:11px; color:#888">Search: "5V 2W flexible solar panel"</td></tr>
-      <tr><td>7</td><td>P-MOSFET</td><td>IRF9540 P-Channel TO-220</td><td>1</td><td class="budget-val">~$0.5–1</td><td class="note">High</td><td style="font-size:11px; color:#888">Mouser: 942-IRF9540PBF</td></tr>
-      <tr><td>8</td><td>NPN Transistor</td><td>2N2222 TO-92</td><td>1</td><td class="budget-val">~$0.10</td><td class="note">High</td><td style="font-size:11px; color:#888">Mouser: 610-2N2222</td></tr>
-      <tr><td>9</td><td>Soil Sensor</td><td>Capacitive Soil Moisture V1.2/V2.0</td><td>2</td><td class="budget-val">~$2–4</td><td class="note">High</td><td style="font-size:11px; color:#888">Search: "capacitive soil moisture sensor v2"</td></tr>
-      <tr><td>10</td><td>Temp/Humidity</td><td>DHT22 (AM2302)</td><td>2</td><td class="budget-val">~$3–5</td><td class="note">High</td><td style="font-size:11px; color:#888">Mouser: 998-DHT22</td></tr>
-      <tr><td>11</td><td>Capacitor</td><td>1000µF 10V Electrolytic</td><td>1</td><td class="budget-val">~$0.20</td><td class="note">High</td><td style="font-size:11px; color:#888">Mouser: 140-XRL10V1000-RC</td></tr>
-      <tr><td>12</td><td>Resistor</td><td>1kΩ 1/4W</td><td>2</td><td class="budget-val">~$0.05 ea</td><td class="ok">Std</td><td style="font-size:11px; color:#888">Any supplier</td></tr>
-      <tr><td>13</td><td>Resistor</td><td>2kΩ 1/4W</td><td>1</td><td class="budget-val">~$0.05</td><td class="ok">Std</td><td style="font-size:11px; color:#888">Any supplier</td></tr>
-      <tr><td>14</td><td>Resistor</td><td>10kΩ 1/4W</td><td>2</td><td class="budget-val">~$0.05 ea</td><td class="ok">Std</td><td style="font-size:11px; color:#888">DHT22 pull-ups</td></tr>
-      <tr><td>15</td><td>Rocker Switch</td><td>KCD3 Waterproof 3-pin w/ LED</td><td>1</td><td class="budget-val">~$2–4</td><td class="ok">Std</td><td style="font-size:11px; color:#888">Search: "KCD3 waterproof rocker switch"</td></tr>
-      <tr><td>16</td><td>Enclosure</td><td>IP65 Junction Box ~150×100×70mm</td><td>1</td><td class="budget-val">~$5–12</td><td class="ok">Std</td><td style="font-size:11px; color:#888">Search: "IP65 waterproof junction box"</td></tr>
-      <tr><td>17</td><td>Cable Glands</td><td>PG7 / PG9 Waterproof Glands</td><td>4–6</td><td class="budget-val">~$0.30 ea</td><td class="ok">Std</td><td style="font-size:11px; color:#888">For sensor cable entry</td></tr>
-      <tr><td>18</td><td>Conformal Coating</td><td>Silicone or Acrylic Spray</td><td>1</td><td class="budget-val">~$8–15</td><td class="note">High</td><td style="font-size:11px; color:#888">MG Chemicals 422B or similar</td></tr>
+      <tr class="priority-high"><td>1</td><td>Microcontroller</td><td>ESP32 DevKit V1 (38-pin)</td><td>1</td><td class="budget-val">~$4–8</td><td class="warn">Critical</td><td style="font-size:11px;color:#888">Search: "ESP32 DevKit V1 38-pin"</td></tr>
+      <tr class="priority-high"><td>2</td><td>GSM Module</td><td>SIM800L + External Antenna</td><td>1</td><td class="budget-val">~$6–12</td><td class="warn">Critical</td><td style="font-size:11px;color:#888">Search: "SIM800L module antenna"</td></tr>
+      <tr class="priority-high"><td>3</td><td>Charge Controller</td><td>TP4056 18650 Module</td><td>1</td><td class="budget-val">~$0.5–1</td><td class="warn">Critical</td><td style="font-size:11px;color:#888">Mouser: 576-TP4056</td></tr>
+      <tr class="priority-high"><td>4</td><td>Battery</td><td>18650 Li-ion 3400mAh Protected</td><td>1</td><td class="budget-val">~$5–10</td><td class="warn">Critical</td><td style="font-size:11px;color:#888">Panasonic NCR18650B recommended</td></tr>
+      <tr><td>5</td><td>Boost Converter</td><td>MT3608 DC-DC 5V Fixed</td><td>1</td><td class="budget-val">~$1–2</td><td class="note">High</td><td style="font-size:11px;color:#888">Search: "MT3608 boost module 5V"</td></tr>
+      <tr><td>6</td><td>Solar Panel</td><td>5V 2W Flexible USB</td><td>1</td><td class="budget-val">~$8–15</td><td class="note">High</td><td style="font-size:11px;color:#888">Search: "5V 2W flexible solar panel"</td></tr>
+      <tr><td>7</td><td>N-MOSFET</td><td>IRF540 N-Channel TO-220</td><td>1</td><td class="budget-val">~$0.5–1</td><td class="note">High</td><td style="font-size:11px;color:#888">Mouser: 942-IRF540NPBF</td></tr>
+      <tr><td>8</td><td>NPN Transistor</td><td>2N2222 TO-92</td><td>1</td><td class="budget-val">~$0.10</td><td class="note">High</td><td style="font-size:11px;color:#888">Mouser: 610-2N2222</td></tr>
+      <tr><td>9</td><td>Soil Sensor</td><td>Capacitive Soil Moisture V1.2/V2.0</td><td>2</td><td class="budget-val">~$2–4</td><td class="note">High</td><td style="font-size:11px;color:#888">Search: "capacitive soil moisture sensor v2"</td></tr>
+      <tr><td>10</td><td>Temp/Humidity</td><td>DHT22 (AM2302)</td><td>2</td><td class="budget-val">~$3–5</td><td class="note">High</td><td style="font-size:11px;color:#888">Mouser: 998-DHT22</td></tr>
+      <tr><td>11</td><td>Capacitor</td><td>1000µF 10V Electrolytic</td><td>1</td><td class="budget-val">~$0.20</td><td class="note">High</td><td style="font-size:11px;color:#888">Mouser: 140-XRL10V1000-RC</td></tr>
+      <tr><td>12</td><td>Resistor</td><td>1kΩ 1/4W</td><td>2</td><td class="budget-val">~$0.05 ea</td><td class="ok">Std</td><td style="font-size:11px;color:#888">Any supplier</td></tr>
+      <tr><td>13</td><td>Resistor</td><td>2kΩ 1/4W</td><td>1</td><td class="budget-val">~$0.05</td><td class="ok">Std</td><td style="font-size:11px;color:#888">Any supplier</td></tr>
+      <tr><td>14</td><td>Resistor</td><td>10kΩ 1/4W</td><td>2</td><td class="budget-val">~$0.05 ea</td><td class="ok">Std</td><td style="font-size:11px;color:#888">DHT22 pull-ups</td></tr>
+      <tr><td>15</td><td>Enclosure</td><td>IP65 Junction Box ~150×100×70mm</td><td>1</td><td class="budget-val">~$5–12</td><td class="ok">Std</td><td style="font-size:11px;color:#888">Search: "IP65 waterproof junction box"</td></tr>
+      <tr><td>16</td><td>Cable Glands</td><td>PG7 / PG9 Waterproof Glands</td><td>4–6</td><td class="budget-val">~$0.30 ea</td><td class="ok">Std</td><td style="font-size:11px;color:#888">For sensor cable entry</td></tr>
+      <tr><td>17</td><td>Conformal Coating</td><td>Silicone or Acrylic Spray</td><td>1</td><td class="budget-val">~$8–15</td><td class="note">High</td><td style="font-size:11px;color:#888">MG Chemicals 422B or similar</td></tr>
+      <!-- REV 1.2 additions — soil sensors only -->
+      <tr class="priority-high" style="background:#050f1a">
+        <td>18</td>
+        <td>JST-XH Housing 3-pin <span class="new-tag">NEW 1.2</span></td>
+        <td>JST XHP-3 or equiv, 2.54mm</td><td>2</td>
+        <td class="budget-val">~$0.10 ea</td>
+        <td style="color:#00b0ff;font-size:11px">REV 1.2</td>
+        <td style="font-size:11px;color:#888">Soil sensor cable entries only (VCC, GND, SIG)</td>
+      </tr>
+      <tr style="background:#050f1a">
+        <td>19</td>
+        <td>JST-XH Crimp Pins <span class="new-tag">NEW 1.2</span></td>
+        <td>BXH-001T-P0.6 or equiv, 28–20 AWG</td><td>8</td>
+        <td class="budget-val">~$0.05 ea</td>
+        <td style="color:#00b0ff;font-size:11px">REV 1.2</td>
+        <td style="font-size:11px;color:#888">3 pins × 2 connectors + 2 spare</td>
+      </tr>
       <tr style="background:#0f1f0f">
-        <td colspan="4" style="color:#00e676; font-weight:bold; font-family:'Share Tech Mono',monospace">ESTIMATED TOTAL</td>
-        <td class="budget-val" style="font-size:16px; color:#ffab00">~$55–110 USD</td>
-        <td colspan="2" style="color:#888; font-size:11px">Prices vary by supplier (AliExpress vs Mouser)</td>
+        <td colspan="4" style="color:#00e676;font-weight:bold;font-family:'Share Tech Mono',monospace">ESTIMATED TOTAL (REV 1.2)</td>
+        <td class="budget-val" style="font-size:16px;color:#ffab00">~$54–111 USD</td>
+        <td colspan="2" style="color:#888;font-size:11px">KCD3 removed. JST-XH soil connectors added. Net ~$0 change.</td>
       </tr>
     </tbody>
   </table>
