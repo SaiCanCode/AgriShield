@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "279813429718",
+    "project_id": "agrishield-71213",
+    "storage_bucket": "agrishield-71213.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279813429718:android:713ca284b6f5027142ac77",
+        "android_client_info": {
+          "package_name": "com.example.agrishield2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmztirWKOZXeI1GD9F33cr0nv7uQVEVxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

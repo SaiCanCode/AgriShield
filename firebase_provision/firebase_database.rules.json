@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "nodes": {
+      "$nodeId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.device_id == $nodeId"
+      }
+    },
+    "notification_tokens": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "node_subscribers": {
+      "$nodeId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid",
+          ".write": "auth != null && auth.uid == $uid"
+        }
+      }
+    },
+    "node_meta": {
+      ".read": "auth != null",
+      ".write": "false"
+    },
+    ".read": "false",
+    ".write": "false"
+  }
+}
