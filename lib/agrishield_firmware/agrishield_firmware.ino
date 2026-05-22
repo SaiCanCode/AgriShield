@@ -177,17 +177,21 @@ void loop() {
   // This is not accurate calendar time but is unique per reading.
   // It will be overwritten with NTP time in Step 4 if Wi-Fi is available.
   reading.timestamp = (uint32_t)(millis() / 1000UL);
+  reading.currentDay = getDeploymentDay(reading.timestamp);
+  reading.growthStage = getGrowthStage(reading.currentDay);
   DBG_F("[MAIN] Preliminary timestamp (millis-based): %u\n", reading.timestamp);
 
   // ════════════════════════════════════════════════════════════
-  // STEP 3: RUN RULE ENGINE
+  // STEP 3: RUN RULE ENGINE (structured AlertResult)
   // ════════════════════════════════════════════════════════════
   DBG("[MAIN] STEP 3: Evaluating alert rules...");
   esp_task_wdt_reset();
 
-  AlertResult alert = rules_evaluate(reading);
+  // New structured rule API: evaluateRules(reading, nowUnix, outAlert)
+  AlertResult alert;
+  bool hasAlert = evaluateRules(reading, reading.timestamp, alert);
 
-  if (alert.type == ALERT_NONE) {
+  if (!hasAlert || alert.type == ALERT_NONE) {
     DBG("[MAIN] Rule engine: ALL CLEAR — no alert conditions detected.");
   } else {
     DBG_F("[MAIN] Rule engine: ALERT FIRED → type=%s  value=%.2f  threshold=%.2f\n",
@@ -240,6 +244,8 @@ void loop() {
     time(&ntpNow);
     if (ntpNow > 1577836800) {  // Valid NTP time (after 2020)
       reading.timestamp = (uint32_t)ntpNow;
+      reading.currentDay = getDeploymentDay(reading.timestamp);
+      reading.growthStage = getGrowthStage(reading.currentDay);
       DBG_F("[MAIN] Timestamp updated from NTP: %u\n", reading.timestamp);
     }
 

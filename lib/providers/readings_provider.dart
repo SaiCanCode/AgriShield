@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../services/realtime_service.dart';
-import '../models/alert_entry.dart';
+import '../alerts/alert_entry.dart';
 import '../models/sensor_reading.dart';
 
 const String _databaseUrl = 'https://agrishield-71213-default-rtdb.firebaseio.com';

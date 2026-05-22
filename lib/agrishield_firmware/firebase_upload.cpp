@@ -32,6 +32,7 @@
 #include <WiFi.h>
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>   // Firebase token generation helper
+#include <math.h>                  // isfinite for runtime average validation
 #include <time.h>                  // NTP time functions
 
 // Firebase objects (global within this file)
@@ -179,6 +180,12 @@ static uint32_t getUnixTimestamp() {
   return (uint32_t)now;
 }
 
+static bool averagesValid(const SensorReading &r) {
+  return isfinite(r.avgTemp) &&
+         isfinite(r.avgHumidity) &&
+         isfinite(r.avgSoil);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // buildReadingJSON
 // Constructs a FirebaseJson payload for one sensor reading.
@@ -190,9 +197,31 @@ static void buildReadingJSON(FirebaseJson& json,
                              bool                 smsSent) {
   json.clear();
   json.set("ts", (uint32_t)r.timestamp);
+
+  // sensors object — per-sensor readings
+  FirebaseJson sensors;
+  sensors.set("temp1", r.dhtOk ? r.temp1 : -1.0f);
+  sensors.set("hum1",  r.dhtOk ? r.humidity1 : -1.0f);
+  sensors.set("temp2", r.dhtOk ? r.temp2 : -1.0f);
+  sensors.set("hum2",  r.dhtOk ? r.humidity2 : -1.0f);
+  sensors.set("soil1", r.soilOk ? r.soil1 : -1.0f);
+  sensors.set("soil2", r.soilOk ? r.soil2 : -1.0f);
+  json.set("sensors", sensors);
+
+  // avg object — canonical averages used by rules
+  FirebaseJson avg;
+  avg.set("temp", r.avgTemp);
+  avg.set("hum",  r.avgHumidity);
+  avg.set("soil", r.avgSoil);
+  json.set("avg", avg);
+
+  // Compatibility top-level fields for older clients
   json.set("temp", r.dhtOk ? r.temperature : -1.0f);
   json.set("humidity", r.dhtOk ? r.humidity : -1.0f);
   json.set("soil", r.soilOk ? r.soilMoisture : -1.0f);
+
+  json.set("stage", stageName(r.growthStage));
+  json.set("day", r.currentDay);
   json.set("alert_type", alertTypeName(alert.type));
   json.set("sms_sent", smsSent);
   json.set("fw_version", FIRMWARE_VERSION);
@@ -215,9 +244,17 @@ static void addToOfflineBuffer(const SensorReading& r,
   }
 
   BufferedReading& br = offlineBuffer[offlineBufferCount];
+  br.temp1          = r.temp1;
+  br.hum1           = r.humidity1;
+  br.temp2          = r.temp2;
+  br.hum2           = r.humidity2;
+  br.soil1          = r.soil1;
+  br.soil2          = r.soil2;
   br.temperature    = r.temperature;
   br.humidity       = r.humidity;
   br.soilMoisture   = r.soilMoisture;
+  br.growthStage    = r.growthStage;
+  br.currentDay     = r.currentDay;
   br.timestamp      = r.timestamp;
   br.alertType      = (uint8_t)alert.type;
   br.smsSent        = smsSent;
@@ -248,6 +285,12 @@ bool firebase_uploadReading(const SensorReading& reading,
   snprintf(path, sizeof(path), "/nodes/%s/readings/%u", NODE_ID, reading.timestamp);
 
   // ── Build the JSON payload ───────────────────────────────────────────────
+  if (!averagesValid(reading)) {
+    DBG("[FIREBASE] Invalid averages — buffering reading instead of uploading.");
+    addToOfflineBuffer(reading, alert, smsSent);
+    return false;
+  }
+
   FirebaseJson json;
   buildReadingJSON(json, reading, alert, smsSent);
 
@@ -265,22 +308,26 @@ bool firebase_uploadReading(const SensorReading& reading,
   }
   DBG("[FIREBASE] Reading uploaded successfully.");
 
-  // ── Write alert entry (if alert fired) ──────────────────────────────────
+  // ── Write structured alert entry (if alert fired) ───────────────────────
   if (alert.type != ALERT_NONE) {
     char alertPath[120];
-    char alertJson[300];
     snprintf(alertPath, sizeof(alertPath),
              "/nodes/%s/alerts/%u", NODE_ID, reading.timestamp);
-    snprintf(alertJson, sizeof(alertJson),
-             "{\"ts\":%u,\"type\":\"%s\",\"value\":%.2f,\"threshold\":%.2f,\"sms_sent\":%s}",
-             reading.timestamp,
-             alertTypeName(alert.type),
-             alert.triggerValue,
-             alert.threshold,
-             smsSent ? "true" : "false");
 
-    Firebase.RTDB.setRaw(&fbData, alertPath, alertJson);
-    DBG_F("[FIREBASE] Alert entry written to: %s\n", alertPath);
+    // Structured alert JSON so clients can parse deterministically.
+    FirebaseJson alertPayload;
+    alertPayload.set("ts", (uint32_t)reading.timestamp);
+    alertPayload.set("type", alertTypeName(alert.type));
+    alertPayload.set("severity", (int)alert.severity);
+    alertPayload.set("trigger_value", alert.triggerValue);
+    alertPayload.set("threshold", alert.threshold);
+    alertPayload.set("action", String(alert.action));
+    alertPayload.set("message", String(alert.message));
+    alertPayload.set("source", String(alert.source));
+    alertPayload.set("sms_sent", smsSent);
+
+    Firebase.RTDB.setJSON(&fbData, alertPath, &alertPayload);
+    DBG_F("[FIREBASE] Structured alert JSON written to: %s\n", alertPath);
   }
 
   // ── Update node last_seen ────────────────────────────────────────────────
@@ -310,9 +357,20 @@ bool firebase_uploadBuffer() {
 
     // Reconstruct SensorReading and AlertResult from the buffer entry
     SensorReading r = emptySensorReading();
+    r.temp1          = br.temp1;
+    r.humidity1      = br.hum1;
+    r.temp2          = br.temp2;
+    r.humidity2      = br.hum2;
+    r.soil1          = br.soil1;
+    r.soil2          = br.soil2;
     r.temperature    = br.temperature;
     r.humidity       = br.humidity;
     r.soilMoisture   = br.soilMoisture;
+    r.avgTemp        = br.temperature;
+    r.avgHumidity    = br.humidity;
+    r.avgSoil        = br.soilMoisture;
+    r.growthStage    = br.growthStage;
+    r.currentDay     = br.currentDay;
     r.timestamp      = br.timestamp;
     r.dhtOk          = (r.temperature > -40.0f);  // -1.0 is our error sentinel
     r.soilOk         = (r.soilMoisture >= 0.0f);

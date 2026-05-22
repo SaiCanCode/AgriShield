@@ -1,5 +1,6 @@
-import 'package:agrishield2/core/agri_text.dart';
+﻿import 'package:agrishield2/core/agri_text.dart';
 import 'package:agrishield2/core/media_query.dart';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/theme.dart';
@@ -7,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/login_controller.dart';
 import 'routes.dart';
 
-//  MOBILE — Floating Bottom Nav
+//  MOBILE â€” Floating Bottom Nav
 
 
 class _MobileScaffold extends StatelessWidget {
@@ -26,14 +27,14 @@ class _MobileScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AgriColors.primaryLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // extendBody lets content go behind the floating nav
       extendBody: true,
       body: child,
       bottomNavigationBar: _FloatingBottomNav(
-        items:        items,
+        items: items,
         currentIndex: currentIndex,
-        onTap:        onTap,
+        onTap: onTap,
       ),
     );
   }
@@ -52,8 +53,11 @@ class _FloatingBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final blur = ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18);
+    final cs = Theme.of(context).colorScheme;
+
     return Padding(
-      // Floating effect — gap from edges and bottom
+      // Floating effect â€” gap from edges and bottom
       padding: EdgeInsets.fromLTRB(
         24, 0, 24,
         MediaQuery.of(context).padding.bottom + 16,
@@ -61,26 +65,22 @@ class _FloatingBottomNav extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
-          filter: ColorFilter.matrix(const [
-            1, 0, 0, 0, 0,
-            0, 1, 0, 0, 0,
-            0, 0, 1, 0, 0,
-            0, 0, 0, 0.92, 0,
-          ]),
+          filter: blur,
           child: Container(
             height: 68,
             decoration: BoxDecoration(
-              color:        AgriColors.backgroundCard.withValues(alpha: 0.95),
+              // fully transparent fill so backdrop shows through
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: AgriColors.border,
+                color: cs.primary.withValues(alpha: 0.18),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color:      Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 24,
-                  offset:     const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -130,7 +130,7 @@ class _FloatingNavItem extends StatelessWidget {
         padding:  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color:        isActive
-              ? AgriColors.primary.withValues(alpha: 0.12)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.18)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
@@ -140,12 +140,12 @@ class _FloatingNavItem extends StatelessWidget {
           children: [
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              child: Icon(
+                child: Icon(
                 isActive ? item.activeIcon : item.icon,
                 key:   ValueKey(isActive),
                 color: isActive
-                    ? AgriColors.primary
-                    : AgriColors.textSecondary,
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
                 size:  22,
               ),
             ),
@@ -153,13 +153,13 @@ class _FloatingNavItem extends StatelessWidget {
             const SizedBox(height: 2),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 900),
-              style: TextStyle(
+                style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize:   8,
                 fontWeight: isActive ? FontWeight.w900 : FontWeight.w400,
                 color:      isActive
-                    ? AgriColors.primary
-                    : AgriColors.textSecondary,
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
               ),
               child: Text(item.label),
             ),
@@ -189,7 +189,7 @@ class _TabletScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AgriColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           // Permanent sidebar
@@ -198,7 +198,7 @@ class _TabletScaffold extends StatelessWidget {
             currentIndex: currentIndex,
             onTap:        onTap,
           ),
-          
+
           const VerticalDivider(width: 1, thickness: 1),
           // Main content
 
@@ -294,7 +294,7 @@ class _SidebarNavState extends ConsumerState<_SidebarNav> {
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      color: AgriColors.backgroundCard,
+      color: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,17 +308,23 @@ class _SidebarNavState extends ConsumerState<_SidebarNav> {
                     width:  36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color:        AgriColors.primary.withValues(alpha: 0.15),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.shield_outlined,
-                      color: AgriColors.primary,
+                      color: Colors.white,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 10),
-                  AgriText.h3('AgriShield'),
+                  Text(
+                    'AgriShield',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                  ),
                 ],
               ),
             ),
@@ -404,7 +410,7 @@ class _SidebarItem extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color:        isActive
-              ? AgriColors.primary.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -418,7 +424,7 @@ class _SidebarItem extends StatelessWidget {
                 width:  3,
                 height: isActive ? 20 : 0,
                 decoration: BoxDecoration(
-                  color:        AgriColors.primary,
+                  color:        Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -426,8 +432,8 @@ class _SidebarItem extends StatelessWidget {
               Icon(
                 isActive ? item.activeIcon : item.icon,
                 color: iconColor ?? (isActive
-                    ? AgriColors.primary
-                    : AgriColors.textSecondary),
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65)),
                 size: 20,
               ),
             ],
@@ -435,8 +441,8 @@ class _SidebarItem extends StatelessWidget {
           title: AgriText.bodyMedium(
             item.label,
             color: textColor ?? (isActive
-                ? AgriColors.primary
-                : AgriColors.textPrimary),
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurface),
           ),
           onTap: onTap,
         ),
@@ -461,3 +467,5 @@ class _NavItem {
   final String   label;
   final String   route;
 }
+
+

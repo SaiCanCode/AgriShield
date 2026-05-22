@@ -46,6 +46,8 @@ class WeatherScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final routes = ['/dashboard', '/alerts', '/node-status', '/history', '/settings'];
     final weatherAsync = ref.watch(weatherControllerProvider);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return NavBar(
       currentIndex: 0,
@@ -105,7 +107,7 @@ class WeatherScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.cloud_off_outlined, size: 40, color: AgriColors.textSecondary),
+                      Icon(Icons.cloud_off_outlined, size: 40, color: cs.onSurface.withValues(alpha: 0.7)),
                       const SizedBox(height: 12),
                       AgriText.h3('Weather unavailable'),
                       const SizedBox(height: 8),
@@ -113,7 +115,7 @@ class WeatherScreen extends ConsumerWidget {
                         '$error',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AgriColors.textSecondary,
+                          color: cs.onSurface.withValues(alpha: 0.7),
                             ),
                       ),
                       const SizedBox(height: 16),
@@ -150,6 +152,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final icon = _weatherIcon(weather.condition);
     final accent = _weatherAccent(weather.condition);
 
@@ -165,7 +168,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AgriText.label('Weather'),
+                      AgriText.label('Weather', color: cs.onSurface.withValues(alpha: 0.8)),
                       const SizedBox(height: 4),
                       Text(
                         weather.location,
@@ -194,7 +197,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
                     '${weather.temperature.toStringAsFixed(1)}°',
                     style: theme.textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AgriColors.textPrimary,
+                      color: cs.onSurface,
                     ),
                   ),
                 ),
@@ -203,7 +206,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     'C',
-                    style: theme.textTheme.titleLarge?.copyWith(color: AgriColors.textSecondary),
+                    style: theme.textTheme.titleLarge?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
                   ),
                 ),
               ],
@@ -211,12 +214,12 @@ class _CurrentWeatherPanel extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               weather.condition,
-              style: theme.textTheme.titleMedium?.copyWith(color: AgriColors.textSecondary),
+              style: theme.textTheme.titleMedium?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 10),
             Text(
               'Feels like ${weather.feelsLike.toStringAsFixed(1)}°C',
-              style: theme.textTheme.bodyMedium?.copyWith(color: AgriColors.textSecondary),
+              style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 20),
             LayoutBuilder(
@@ -314,9 +317,9 @@ class _ForecastCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AgriColors.backgroundSurface,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AgriColors.borderLight),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -342,7 +345,7 @@ class _ForecastCard extends StatelessWidget {
                   forecast.time,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AgriColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                 ),
               ],
             ),
@@ -367,18 +370,18 @@ class _EmptyForecastCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AgriColors.backgroundSurface,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AgriColors.borderLight),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
-          const Icon(Icons.schedule_outlined, color: AgriColors.textSecondary),
+          Icon(Icons.schedule_outlined, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'No hourly forecast available yet.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AgriColors.textSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             ),
           ),
         ],
@@ -401,16 +404,16 @@ class _WeatherMetricTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AgriColors.backgroundSurface,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AgriColors.border),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AgriColors.textSecondary),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 6),
             Text(

@@ -18,27 +18,30 @@
 #include "config.h"
 #include <DHT.h>
 
-// Create the DHT object. DHT22 is the sensor type.
-// PIN_DHT22 is defined in config.h as GPIO4.
-static DHT dht(PIN_DHT22, DHT22);
+// Two DHT objects support dual-sensor averaging by default.
+static DHT dht1(PIN_DHT22, DHT22);
+static DHT dht2(PIN_DHT22_2, DHT22);
 
 // -----------------------------------------------------------------------------
 // sensors_init
 // Called once from setup(). Starts the DHT library.
 // -----------------------------------------------------------------------------
 void sensors_init() {
-  dht.begin();
-  DBG("[SENSOR] DHT22 initialised on pin " + String(PIN_DHT22));
+  dht1.begin();
+  dht2.begin();
+  DBG("[SENSOR] DHT22 #1 initialised on pin " + String(PIN_DHT22));
+  DBG("[SENSOR] DHT22 #2 initialised on pin " + String(PIN_DHT22_2));
 
   // Set ADC resolution to 12 bits (0-4095). This is the default on ESP32
   // but we set it explicitly so the code is self-documenting.
   analogReadResolution(12);
 
-  // Set ADC attenuation for the soil ADC pin.
-  // ADC_11db allows reading up to 3.3V on this pin.
+  // Set ADC attenuation for both soil ADC pins.
+  // ADC_11db allows reading up to 3.3V on these pins.
   analogSetPinAttenuation(PIN_SOIL_AOUT,   ADC_11db);
+  analogSetPinAttenuation(PIN_SOIL_AOUT_2, ADC_11db);
 
-  DBG("[SENSOR] ADC configured: 12-bit, 11dB attenuation on GPIO34");
+  DBG("[SENSOR] ADC configured: 12-bit, 11dB attenuation on soil pins");
 }
 
 // -----------------------------------------------------------------------------
@@ -63,55 +66,81 @@ static int readADCAverage(int pin) {
 SensorReading sensors_readAll() {
   SensorReading reading = emptySensorReading();
 
-  // ── 1. DHT22: Temperature and Humidity ──────────────────────────────────
+  // ── 1. DHT22: Temperature and Humidity (dual sensor average) ───────────
   // The DHT22 needs at least 2 seconds after power-on before it gives
   // valid readings. We enforce this wait here.
   DBG("[SENSOR] Waiting for DHT22 warmup...");
   delay(DHT_WARMUP_MS);
 
-  float temp = dht.readTemperature();  // Returns Celsius
-  float hum  = dht.readHumidity();     // Returns %
+  float temp1 = dht1.readTemperature();
+  float hum1  = dht1.readHumidity();
+  float temp2 = dht2.readTemperature();
+  float hum2  = dht2.readHumidity();
 
-  // isnan() detects NaN — what the DHT library returns on read failure.
-  if (isnan(temp) || isnan(hum)) {
-    DBG("[SENSOR] WARNING: DHT22 returned NaN — sensor fault or loose wire.");
-    DBG("[SENSOR] Check: DATA pin pull-up resistor (10kΩ) and cable length.");
-    reading.dhtOk       = false;
-    reading.temperature = 0.0f;
-    reading.humidity    = 0.0f;
+  bool dht1Ok = !(isnan(temp1) || isnan(hum1));
+  bool dht2Ok = !(isnan(temp2) || isnan(hum2));
+
+  reading.temp1 = dht1Ok ? temp1 : 0.0f;
+  reading.humidity1 = dht1Ok ? hum1 : 0.0f;
+  reading.temp2 = dht2Ok ? temp2 : 0.0f;
+  reading.humidity2 = dht2Ok ? hum2 : 0.0f;
+
+  int dhtValidCount = (dht1Ok ? 1 : 0) + (dht2Ok ? 1 : 0);
+  if (dhtValidCount == 0) {
+    DBG("[SENSOR] WARNING: Both DHT22 sensors failed (NaN readings).");
+    reading.dhtOk = false;
+    reading.avgTemp = 0.0f;
+    reading.avgHumidity = 0.0f;
   } else {
-    reading.dhtOk       = true;
-    reading.temperature = temp;
-    reading.humidity    = hum;
-    DBG_F("[SENSOR] DHT22 OK — Temp: %.1f°C  Humidity: %.1f%%\n", temp, hum);
+    float dhtTempSum = (dht1Ok ? temp1 : 0.0f) + (dht2Ok ? temp2 : 0.0f);
+    float dhtHumSum = (dht1Ok ? hum1 : 0.0f) + (dht2Ok ? hum2 : 0.0f);
+    reading.dhtOk = true;
+    reading.avgTemp = dhtTempSum / (float)dhtValidCount;
+    reading.avgHumidity = dhtHumSum / (float)dhtValidCount;
+    DBG_F("[SENSOR] DHT OK — T1: %.1fC H1: %.1f%%  T2: %.1fC H2: %.1f%%\n",
+          reading.temp1, reading.humidity1, reading.temp2, reading.humidity2);
   }
+
+  // Compatibility fields used by existing upload/SMS code.
+  reading.temperature = reading.avgTemp;
+  reading.humidity = reading.avgHumidity;
 
   // ── 2. Capacitive Soil Moisture Sensor ──────────────────────────────────
   // The sensor outputs a voltage between 0 and 3.3V.
   // Higher voltage = drier soil (less capacitance).
   // Lower voltage  = wetter soil (more capacitance).
   // We read the ADC and map it to a 0–100% moisture percentage.
-  int rawADC = readADCAverage(PIN_SOIL_AOUT);
-  DBG_F("[SENSOR] Soil raw ADC: %d (DRY=%d, WET=%d)\n",
-        rawADC, SOIL_DRY_ADC, SOIL_WET_ADC);
+  int rawADC1 = readADCAverage(PIN_SOIL_AOUT);
+  int rawADC2 = readADCAverage(PIN_SOIL_AOUT_2);
+  DBG_F("[SENSOR] Soil raw ADC: S1=%d S2=%d (DRY=%d, WET=%d)\n",
+        rawADC1, rawADC2, SOIL_DRY_ADC, SOIL_WET_ADC);
 
-  // Arduino map() function: maps rawADC from [DRY, WET] range to [0, 100].
-  // Note: DRY > WET because drier soil = higher ADC reading.
-  // We use constrain() to clamp the output to 0–100 in case the sensor
-  // goes slightly out of its calibration range in extreme conditions.
-  float moisture = map(rawADC, SOIL_DRY_ADC, SOIL_WET_ADC, 0, 100);
-  moisture = constrain(moisture, 0.0f, 100.0f);
+  auto adcToMoisture = [](int raw) {
+    float m = map(raw, SOIL_DRY_ADC, SOIL_WET_ADC, 0, 100);
+    return constrain(m, 0.0f, 100.0f);
+  };
 
-  // Sanity check: if the ADC reads near 0 or 4095 it's likely a wiring fault.
-  if (rawADC < 100 || rawADC > 4090) {
-    DBG("[SENSOR] WARNING: Soil ADC value is at extreme. Check sensor wiring.");
-    reading.soilOk      = false;
-    reading.soilMoisture = 0.0f;
+  bool soil1Ok = (rawADC1 >= 100 && rawADC1 <= 4090);
+  bool soil2Ok = (rawADC2 >= 100 && rawADC2 <= 4090);
+
+  reading.soil1 = soil1Ok ? adcToMoisture(rawADC1) : 0.0f;
+  reading.soil2 = soil2Ok ? adcToMoisture(rawADC2) : 0.0f;
+
+  int soilValidCount = (soil1Ok ? 1 : 0) + (soil2Ok ? 1 : 0);
+  if (soilValidCount == 0) {
+    DBG("[SENSOR] WARNING: Both soil sensors look invalid. Check wiring.");
+    reading.soilOk = false;
+    reading.avgSoil = 0.0f;
   } else {
-    reading.soilOk       = true;
-    reading.soilMoisture = moisture;
-    DBG_F("[SENSOR] Soil moisture: %.1f%%\n", moisture);
+    float soilSum = (soil1Ok ? reading.soil1 : 0.0f) + (soil2Ok ? reading.soil2 : 0.0f);
+    reading.soilOk = true;
+    reading.avgSoil = soilSum / (float)soilValidCount;
+    DBG_F("[SENSOR] Soil OK — S1: %.1f%%  S2: %.1f%%  Avg: %.1f%%\n",
+          reading.soil1, reading.soil2, reading.avgSoil);
   }
+
+  // Compatibility field used by existing upload path.
+  reading.soilMoisture = reading.avgSoil;
 
   // ── 3. Timestamp (will be filled in by main.ino after NTP sync) ─────────
   // We set it to 0 here. The main loop will overwrite it with the NTP time.

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/theme.dart';
 import '../core/routes.dart';
 import 'login_controller.dart';
 
@@ -47,7 +46,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [ AgriColors.backgroundDark, AgriColors.backgroundSurface, colorScheme.primary.withValues(alpha: 0.28), ],
+            colors: [
+              colorScheme.surface,
+              colorScheme.surfaceContainerHighest,
+              colorScheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.28 : 0.14),
+            ],
           ), ),
 
         child: SafeArea(
@@ -67,20 +70,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(
-                                alpha: 0.14,
+                          Center(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: Image.asset(
+                                'assets/images/Icon_logo.png',
+                                width: 84,
+                                height: 84,
+                                fit: BoxFit.contain,
                               ),
-                              borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(
-                              Icons.phone_iphone_rounded,
-                              size: 36,
-                              color: AgriColors.primary,
-                            ),),
+                          ),
                           const SizedBox(height: 20),
                           Text(
                             'Sign in with your phone number',
@@ -184,15 +184,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       }
                                     },
                               child: state.isLoading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.4,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
-                                            ),
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          colorScheme.onPrimary,
+                                        ),
                                       ),
                                     )
                                   : Text(

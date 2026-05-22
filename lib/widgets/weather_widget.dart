@@ -10,6 +10,8 @@ class WeatherWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final weatherAsync = ref.watch(weatherControllerProvider);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return weatherAsync.when(
       data: (weather) => LayoutBuilder(
@@ -30,14 +32,14 @@ class WeatherWidget extends ConsumerWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AgriColors.backgroundCard,
-                      AgriColors.backgroundSurface.withValues(alpha: 0.95),
+                      cs.surface,
+                      cs.surfaceContainerHighest,
                     ],
                   ),
-                  border: Border.all(color: AgriColors.border),
+                  border: Border.all(color: cs.outline),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.24),
+                      color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.24 : 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -62,15 +64,15 @@ class WeatherWidget extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    AgriText.caption('Weather now', color: AgriColors.textSecondary),
+                                    AgriText.caption('Weather now', color: cs.onSurface.withValues(alpha: 0.75)),
                                     const SizedBox(height: 6),
                                     Text(
                                       weather.location,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      style: theme.textTheme.titleMedium?.copyWith(
                                             fontWeight: FontWeight.w600,
-                                            color: AgriColors.textPrimary,
+                                            color: cs.onSurface,
                                           ),
                                     ),
                                   ],
@@ -104,7 +106,7 @@ class WeatherWidget extends ConsumerWidget {
                                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
                                         fontWeight: FontWeight.w700,
                                         height: 0.95,
-                                        color: AgriColors.textPrimary,
+                                        color: cs.onSurface,
                                       ),
                                 ),
                               ),
@@ -113,8 +115,8 @@ class WeatherWidget extends ConsumerWidget {
                                 padding: const EdgeInsets.only(bottom: 6),
                                 child: Text(
                                   'C',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        color: AgriColors.textSecondary,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                        color: cs.onSurface.withValues(alpha: 0.7),
                                         fontWeight: FontWeight.w500,
                                       ),
                                 ),
@@ -124,8 +126,8 @@ class WeatherWidget extends ConsumerWidget {
                           const SizedBox(height: 6),
                           Text(
                             weather.condition,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AgriColors.textSecondary,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.7),
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -179,8 +181,8 @@ class WeatherWidget extends ConsumerWidget {
                             alignment: Alignment.centerRight,
                             child: Text(
                               'Tap for details',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AgriColors.textSecondary,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                    color: cs.onSurface.withValues(alpha: 0.75),
                                   ),
                             ),
                           ),
@@ -199,8 +201,8 @@ class WeatherWidget extends ConsumerWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: AgriColors.backgroundCard,
-          border: Border.all(color: AgriColors.border),
+          color: cs.surface,
+          border: Border.all(color: cs.outline),
         ),
         child: const SizedBox(
           height: 170,
@@ -212,26 +214,26 @@ class WeatherWidget extends ConsumerWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: AgriColors.backgroundCard,
-          border: Border.all(color: AgriColors.border),
+          color: cs.surface,
+          border: Border.all(color: cs.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AgriText.caption('Weather', color: AgriColors.textSecondary),
+            AgriText.caption('Weather', color: cs.onSurface.withValues(alpha: 0.75)),
             const SizedBox(height: 8),
             Text(
               'Weather unavailable',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AgriColors.textPrimary,
+                    color: cs.onSurface,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
               '$error',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AgriColors.textSecondary,
+                    color: cs.onSurface.withValues(alpha: 0.75),
                   ),
             ),
           ],
@@ -284,13 +286,13 @@ class _Metrics extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AgriColors.backgroundSurface.withValues(alpha: 0.92),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AgriColors.borderLight),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AgriColors.primaryLight),
+            Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -302,7 +304,7 @@ class _Metrics extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AgriColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75),
                         ),
                   ),
                   const SizedBox(height: 2),
@@ -312,7 +314,7 @@ class _Metrics extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AgriColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                   ),
                 ],
@@ -348,7 +350,7 @@ class _ForecastStrip extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             accent.withValues(alpha: 0.14),
-            AgriColors.backgroundSurface.withValues(alpha: 0.9),
+            Theme.of(context).colorScheme.surfaceContainerHighest,
           ],
         ),
         border: Border.all(color: accent.withValues(alpha: 0.25)),
@@ -370,7 +372,7 @@ class _ForecastStrip extends StatelessWidget {
               children: [
                 Text(
                   'Next hour',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AgriColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75)),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -379,7 +381,7 @@ class _ForecastStrip extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AgriColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                       ),
                 ),
               ],
@@ -390,7 +392,7 @@ class _ForecastStrip extends StatelessWidget {
             forecastTemp,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AgriColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
           ),
         ],

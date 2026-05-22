@@ -88,8 +88,8 @@ bool gsm_init() {
   delay(GSM_BOOT_MS);                   // Give module time to boot and stabilise
 
   // ── Step 2: Open UART2 ──────────────────────────────────────────────────
-  // GPIO16 = RX2, GPIO17 = TX2. Baud 9600 is SIM800L default.
-  sim800.begin(9600, SERIAL_8N1, 16, 17);
+  // Pins are sourced from config.h for consistent wiring configuration.
+  sim800.begin(9600, SERIAL_8N1, SIM800L_RX, SIM800L_TX);
   delay(500);
   clearBuffer();
 

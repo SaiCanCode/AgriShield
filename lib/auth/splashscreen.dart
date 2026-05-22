@@ -2,7 +2,6 @@ import 'package:agrishield2/auth/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agrishield2/core/routes.dart';
-import 'package:agrishield2/core/theme.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -33,16 +32,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AgriColors.backgroundDark,
-              AgriColors.primaryDark,
-              AgriColors.textHint,
+              cs.surface,
+              cs.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.35 : 0.16),
+              cs.secondary.withValues(alpha: theme.brightness == Brightness.dark ? 0.22 : 0.10),
             ],
           ),
         ),
@@ -55,7 +56,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 width: 240,
                 height: 240,
                 decoration: BoxDecoration(
-                  color: AgriColors.primary.withValues(alpha: 0.18),
+                  color: cs.primary.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -67,7 +68,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 width: 300,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: AgriColors.secondary.withValues(alpha: 0.12),
+                  color: cs.secondary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -90,10 +91,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           width: 132,
                           height: 132,
                           decoration: BoxDecoration(
-                            color: AgriColors.white.withValues(alpha: 0.08),
+                            color: cs.surface.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: AgriColors.white.withValues(alpha: 0.18),
+                              color: cs.onSurface.withValues(alpha: 0.18),
                               width: 1.2,
                             ),
                           ),
@@ -104,11 +105,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
+                        Text(
                           'AGRISHIELD',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AgriColors.textPrimary,
+                            color: cs.onSurface,
                             fontSize: 34,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 2.2,
@@ -119,7 +120,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           'IS IT FOR AGBADOO',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AgriColors.secondaryLight.withValues(alpha: 0.95),
+                            color: cs.secondary.withValues(alpha: 0.95),
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.0,
@@ -131,8 +132,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           child: LinearProgressIndicator(
                             minHeight: 4,
                             borderRadius: BorderRadius.all(Radius.circular(999)),
-                            color: AgriColors.primary,
-                            backgroundColor: AgriColors.border,
+                            color: Color(0xFF00E676),
+                            backgroundColor: Colors.transparent,
                           ),
                         ),
                       ],

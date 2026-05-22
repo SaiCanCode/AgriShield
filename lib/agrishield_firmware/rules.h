@@ -1,22 +1,25 @@
 // =============================================================================
-//  rules.h  —  Rule-Based Alert Engine (Header)
+//  rules.h  —  Stage-aware rule engine interface
 // =============================================================================
 
 #ifndef RULES_H
 #define RULES_H
 
+#include <Arduino.h>
 #include "types.h"
 
-// Evaluate all alert rules against the sensor reading.
-// Returns the highest-priority alert that fired, or ALERT_NONE if all clear.
-// Checks cooldown before returning — will not return the same alert type
-// more than once per ALERT_COOLDOWN_SECONDS window.
-AlertResult rules_evaluate(const SensorReading& reading);
+// Returns the deployment day (1-indexed) from NVS, writing start timestamp
+// on first boot. Requires NTP to be synced before calling.
+int getDeploymentDay(unsigned long nowUnix);
 
-// Reset all cooldown timers. Used on first boot.
+// Maps a deployment day number to the corresponding GrowthStage enum value.
+GrowthStage getGrowthStage(int day);
+
+// Evaluates all alert rules using stage-appropriate thresholds.
+// Returns true and fills 'out' when an alert should be sent, false otherwise.
+bool evaluateRules(const SensorReading& r, unsigned long nowUnix, AlertResult& out);
+
+// Reset any persisted cooldown timers (used in testing or forced resets).
 void rules_resetCooldowns();
 
-// Print the current cooldown state to Serial (debug only).
-void rules_printCooldownState();
-
-#endif
+#endif // RULES_H

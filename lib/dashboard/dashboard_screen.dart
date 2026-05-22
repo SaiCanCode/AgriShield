@@ -1,7 +1,6 @@
 import 'package:agrishield2/core/responsive_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/agri_text.dart';
 import '../widgets/weather_widget.dart';
 import '../widgets/node_reading_card.dart';
 import '../providers/readings_provider.dart';
@@ -27,8 +26,6 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AgriText.h2('Dashboard'),
-                const SizedBox(height: 24),
                 asyncNodes.when(
                   data: (nodes) {
                     if (nodes.isEmpty) {

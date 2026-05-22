@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
-import '../models/alert_entry.dart';
+import '../alerts/alert_entry.dart';
 import '../models/sensor_reading.dart';
 
 class RealtimeService {

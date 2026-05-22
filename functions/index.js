@@ -7,7 +7,8 @@ admin.initializeApp();
 function buildAlertCopy(alertType, nodeId, payload) {
   const readableNode = nodeId.replace(/_/g, ' ');
   const type = String(alertType || 'unknown').toLowerCase();
-  const value = payload.value ?? payload.threshold ?? '';
+  // Support both old flat schema and new structured firmware schema
+  const value = payload.trigger_value ?? payload.value ?? payload.threshold ?? '';
   const threshold = payload.threshold ?? '';
 
   switch (type) {
@@ -97,8 +98,9 @@ exports.notifyAlertCreated = onValueCreated('/nodes/{nodeId}/alerts/{alertTs}', 
       nodeId: String(nodeId),
       alertTs: String(alertTs),
       alertType: String(alertType),
-      value: String(payload.value ?? ''),
+      value: String(payload.trigger_value ?? payload.value ?? ''),
       threshold: String(payload.threshold ?? ''),
+      action: String(payload.action ?? ''),
       smsSent: String(Boolean(payload.sms_sent)),
     },
     android: {

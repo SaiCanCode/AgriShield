@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -8,8 +7,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
 import '../core/routes.dart';
+import '../firebase_options.dart';
+import '../alerts/alert_entry.dart';
 
 class PushNotificationService {
   PushNotificationService._();
@@ -25,6 +25,10 @@ class PushNotificationService {
   );
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+
+    static final FlutterLocalNotificationsPlugin _backgroundLocalNotifications =
+      FlutterLocalNotificationsPlugin();
+    static bool _backgroundNotificationsInitialized = false;
 
   StreamSubscription<User?>? _authSubscription;
 
@@ -77,14 +81,10 @@ class PushNotificationService {
 
   Future<void> _registerHandlers() async {
     FirebaseMessaging.onMessage.listen((message) async {
-      final notification = message.notification;
-      if (notification == null) return;
-
-      await _showLocalNotification(
-        title: notification.title ?? 'AgriShield Alert',
-        body: notification.body ?? 'You have a new alert.',
-        payload: _encodePayload(message.data),
-      );
+      // Foreground popup side effects are handled via Riverpod ref.listen.
+      if (kDebugMode) {
+        debugPrint('Foreground push received: ${message.messageId}');
+      }
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
@@ -161,6 +161,20 @@ class PushNotificationService {
     );
   }
 
+  Future<void> showAlertNotification(AlertEntry alert) async {
+    final title = _titleForAlertType(alert.type);
+    final body = _bodyForAlert(alert);
+    await _showLocalNotification(
+      title: title,
+      body: body,
+      payload: _encodePayload({
+        'alertType': alert.type,
+        'alertId': alert.alertId,
+        'alertTs': alert.timestamp.toString(),
+      }),
+    );
+  }
+
   void _handleNotificationPayload(String? payload) {
     final navigator = navigatorKey.currentState;
     if (navigator == null) return;
@@ -175,8 +189,100 @@ class PushNotificationService {
     return jsonEncode(data);
   }
 
+  static String _titleForAlertType(String rawType) {
+    final type = rawType.trim().toLowerCase();
+    if (type.isEmpty) return 'AgriShield Alert';
+
+    switch (type) {
+      case 'drought':
+        return 'Drought Alert';
+      case 'flood':
+        return 'Flood Alert';
+      case 'heat':
+        return 'Heat Alert';
+      case 'blight':
+        return 'Blight Risk Alert';
+      default:
+        return 'AgriShield Alert';
+    }
+  }
+
+  static String _bodyForAlert(AlertEntry alert) {
+    if (alert.message.isNotEmpty) {
+      return alert.message;
+    }
+
+    final type = alert.type.trim().toLowerCase();
+    final value = alert.triggerValue.toStringAsFixed(2);
+    final threshold = alert.threshold.toStringAsFixed(2);
+
+    if (type == 'drought') {
+      return 'Low soil moisture detected. Value: $value%, threshold: $threshold%.';
+    }
+    if (type == 'flood') {
+      return 'High soil moisture detected. Value: $value%, threshold: $threshold%.';
+    }
+
+    return 'New ${alert.type.toUpperCase()} alert. Value: $value, threshold: $threshold.';
+  }
+
+  static Future<void> _ensureBackgroundLocalNotifications() async {
+    if (_backgroundNotificationsInitialized) return;
+
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initializationSettings = InitializationSettings(android: androidSettings);
+
+    await _backgroundLocalNotifications.initialize(settings: initializationSettings);
+
+    final androidPlugin = _backgroundLocalNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(_channel);
+    _backgroundNotificationsInitialized = true;
+  }
+
+  static Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
+    final notification = message.notification;
+
+    // If a notification payload is present, Android/iOS usually display it
+    // while the app is backgrounded/terminated. Avoid duplicate popups.
+    if (notification != null) return;
+
+    final data = message.data;
+    final alertType = (data['alertType'] ?? data['type'] ?? 'alert').toString();
+    final title = _titleForAlertType(alertType);
+    final value = (data['value'] ?? '').toString();
+    final threshold = (data['threshold'] ?? '').toString();
+    final body =
+        'New ${alertType.toUpperCase()} alert. Value: $value, threshold: $threshold.';
+
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        _channel.id,
+        _channel.name,
+        channelDescription: _channel.description,
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        icon: '@mipmap/ic_launcher',
+      ),
+    );
+
+    await _backgroundLocalNotifications.show(
+      id: title.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: details,
+      payload: jsonEncode(data),
+    );
+  }
+
   @pragma('vm:entry-point')
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await _ensureBackgroundLocalNotifications();
+    await _showBackgroundLocalNotification(message);
+
     if (kDebugMode) {
       debugPrint('Background push received: ${message.messageId}');
     }

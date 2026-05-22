@@ -7,142 +7,208 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "types.h"   // needs StageThresholds and GrowthStage
+
+// Optional local override file for deployment secrets.
+// Keep credentials in config_local.h (gitignored) when deploying to real farms.
+#if __has_include("config_local.h")
+  #include "config_local.h"
+#endif
+
 // -----------------------------------------------------------------------------
 // Wi-Fi Credentials
-// Replace with the actual Wi-Fi network at the farm.
 // -----------------------------------------------------------------------------
-#define WIFI_SSID         "Sai"
-#define WIFI_PASSWORD     "Excelsior!"
-
-// How long (ms) to wait for Wi-Fi before giving up and skipping upload.
-#define WIFI_TIMEOUT_MS   15000
+#ifndef WIFI_SSID
+  #define WIFI_SSID             "Sai"
+#endif
+#ifndef WIFI_PASSWORD
+  #define WIFI_PASSWORD         "Excelsior!"
+#endif
+#ifndef WIFI_TIMEOUT_MS
+  #define WIFI_TIMEOUT_MS       15000     // 15 seconds before giving up
+#endif
 
 // -----------------------------------------------------------------------------
 // Firebase Realtime Database
 // Get these from: Firebase Console → Project Settings → General → Your apps
-// The database URL looks like:
-//   https://<project-id>-default-rtdb.firebaseio.com/
-// The API key is the "Web API Key" on the same page.
-// -----------------------------------------------------------------------------
-#define FIREBASE_HOST     "agrishield-71213-default-rtdb.firebaseio.com"
-#define FIREBASE_API_KEY  "AIzaSyCTVb_O_yibqPjQNLbEIcZj275nh8UeOjg"
-
-// Firebase Auth — the ESP32 authenticates anonymously.
 // Anonymous sign-in must be ENABLED in Firebase Console →
 //   Authentication → Sign-in method → Anonymous → Enable.
-// No email or password is needed on the device.
-
-// The unique ID for this physical node. Change this if you deploy
-// multiple nodes. Readings will appear at:
-//   /nodes/<NODE_ID>/readings/<timestamp>
-#define NODE_ID           "node_001"
-
-// Firebase upload timeout (ms). If upload takes longer, abort and sleep.
-#define FIREBASE_TIMEOUT_MS  30000
+// -----------------------------------------------------------------------------
+#ifndef FIREBASE_HOST
+  #define FIREBASE_HOST         "agrishield-71213-default-rtdb.firebaseio.com"
+#endif
+#ifndef FIREBASE_API_KEY
+  #define FIREBASE_API_KEY      "AIzaSyCTVb_O_yibqPjQNLbEIcZj275nh8UeOjg"
+#endif
+#ifndef NODE_ID
+  #define NODE_ID               "node_001"
+#endif
+#ifndef FIREBASE_TIMEOUT_MS
+  #define FIREBASE_TIMEOUT_MS   30000
+#endif
 
 // -----------------------------------------------------------------------------
 // Farmer Contact
-// The phone number that receives SMS alerts.
-// MUST be in international format: +234 for Nigeria.
+// Phone number in international format. Language: 0=English 1=Hausa 2=Yoruba 3=Igbo
 // -----------------------------------------------------------------------------
-#define FARMER_PHONE      "+2349029115277"
+#ifndef FARMER_PHONE
+  #define FARMER_PHONE          "+2349029115277"
+#endif
+#ifndef FARMER_LANGUAGE
+  #define FARMER_LANGUAGE       3
+#endif
 
-// Language for SMS messages: 0 = English, 1 = Hausa, 2 = Yoruba, 3 = Igbo
-#define FARMER_LANGUAGE   0
+// -----------------------------------------------------------------------------
+// SMS Message Templates
+// Automatically selected based on FARMER_LANGUAGE above.
+// -----------------------------------------------------------------------------
+#if FARMER_LANGUAGE == 0
+  #define MSG_DROUGHT   "AGRISHIELD ALERT: Soil moisture critically low. Water your crops now."
+  #define MSG_FLOOD     "AGRISHIELD ALERT: Waterlogging detected. Check drainage immediately."
+  #define MSG_HEAT      "AGRISHIELD ALERT: Heat stress detected. Temperature too high for tomatoes."
+  #define MSG_BLIGHT    "AGRISHIELD ALERT: Blight risk conditions active. Apply fungicide now."
+
+#elif FARMER_LANGUAGE == 1
+  #define MSG_DROUGHT   "AGRISHIELD: Ƙasa ta bushe. Shayar da amfanin gona yanzu."
+  #define MSG_FLOOD     "AGRISHIELD: Ruwa ya yi yawa. Duba magudanar ruwa."
+  #define MSG_HEAT      "AGRISHIELD: Zafi ya yi yawa. Yanayin zafi bai dace ba."
+  #define MSG_BLIGHT    "AGRISHIELD: Haɗarin cututtuka. Yi amfani da maganin ƙwari yanzu."
+  
+#elif FARMER_LANGUAGE == 2
+  #define MSG_DROUGHT   "AGRISHIELD: Ile gbẹ. Agbe irugbin rẹ ni bayi."
+  #define MSG_FLOOD     "AGRISHIELD: Omi pọ ju. Ṣayẹwo eto iṣan omi."
+  #define MSG_HEAT      "AGRISHIELD: Ooru ti ga ju. Ipo otutu ko dara fun tomati."
+  #define MSG_BLIGHT    "AGRISHIELD: Ewu arun wa. Lo oogun kokoro ni bayi."
+ 
+#elif FARMER_LANGUAGE == 3
+  #define MSG_DROUGHT   "AGRISHIELD: Ala agbajọ mmiri. Imebe ubi gị ugbu a."
+  #define MSG_FLOOD     "AGRISHIELD: Mmiri karịrị. Lelee usoro ịkwụ mmiri."
+  #define MSG_HEAT      "AGRISHIELD: Okpomọkụ dị elu. Okpomọkụ adịghị mma maka tomato."
+  #define MSG_BLIGHT    "AGRISHIELD: Ọrịa nwere ihe ize ndụ. Jiri ọgwụ ọsọ."
+ 
+#endif
 
 // -----------------------------------------------------------------------------
-// Sensor Pin Assignments
-// These match the wiring described in the SRS.
-// Only change if you physically wire a pin differently.
+// GSM / SIM800L
+// APN settings per Nigerian carrier:
+//   MTN Nigeria:    internet.ng
+//   Airtel Nigeria: internet
+//   Glo Nigeria:    gloflat
+//   9mobile:        emts.ng
 // -----------------------------------------------------------------------------
-#define PIN_DHT22         4     // DHT22 DATA pin → GPIO4 (needs 10kΩ pull-up)
-#define PIN_SOIL_AOUT     34    // Capacitive sensor AOUT → GPIO34 (ADC1, input-only)
-#define PIN_MOSFET_GATE   21    // Controls SIM800L power via P-MOSFET gate circuit
+#define APN_NAME                 "internet.ng"
+#define APN_USER                 ""
+#define APN_PASS                 ""
+#define GSM_BOOT_MS              3000
+#define GSM_REGISTER_TIMEOUT_MS  30000
+#define AT_RETRY_DELAY_MS        1000
+
+// -----------------------------------------------------------------------------
+// Hardware Pin Assignments
+// Only change if you physically rewire a pin.
+// -----------------------------------------------------------------------------
+#define DHT1_PIN              4     // DHT22 DATA → GPIO4 (needs 10kΩ pull-up to 3.3V)
+#define DHT2_PIN              5     // second DHT22
+#define SOIL1_PIN             34    // Soil sensor AOUT → GPIO34 (ADC1 only)
+#define SOIL2_PIN             35    // second soil sensor → GPIO35 (ADC1 only)
+#define SIM800L_POWER         21    // MOSFET gate — controls SIM800L power
+#define SIM800L_RX            16    // ESP32 RX ← SIM800L TX (direct connection)
+#define SIM800L_TX            17    // ESP32 TX → SIM800L RX (via 1kΩ/2kΩ divider)
+
+// Compatibility aliases used by existing modules.
+#define PIN_DHT22             DHT1_PIN
+#define PIN_DHT22_2           DHT2_PIN
+#define PIN_SOIL_AOUT         SOIL1_PIN
+#define PIN_SOIL_AOUT_2       SOIL2_PIN
+#define PIN_MOSFET_GATE       SIM800L_POWER
 
 // -----------------------------------------------------------------------------
 // Soil Sensor Calibration
-// How to calibrate:
-//   1. Power on the node and open Serial Monitor at 115200 baud.
-//   2. Hold the sensor in completely dry air for 10 seconds.
-//      Record the average ADC value printed — that is DRY_ADC_VALUE.
-//   3. Submerge the sensor fully in a glass of clean water for 10 seconds.
-//      Record the average ADC value printed — that is WET_ADC_VALUE.
-//   4. Update the two constants below and re-flash.
+// HOW TO CALIBRATE:
+//   1. Open Serial Monitor at 115200 baud.
+//   2. Hold sensor in completely dry open air for 10 seconds.
+//      Note the stable RAW value → this is SOIL_DRY_ADC.
+//   3. Submerge sensor in water up to the red warning line for 10 seconds.
+//      Note the stable RAW value → this is SOIL_WET_ADC.
+//   4. Update both values below and re-flash.
+// Typical values: Dry ≈ 2700–2900  |  Wet ≈ 700–1000
+// -----------------------------------------------------------------------------
+#define SOIL_DRY_ADC          2800
+#define SOIL_WET_ADC           800
+#define ADC_SAMPLES            5    // samples averaged per reading
+
+// -----------------------------------------------------------------------------
+// Alert Cooldown
+// Minimum gap in seconds between two SMS alerts of the same type.
+// 14400 = 4 hours. Prevents SMS spam for unresolved conditions.
+// -----------------------------------------------------------------------------
+#define ALERT_COOLDOWN_SECONDS   14400
+
+// -----------------------------------------------------------------------------
+// Growth Stage Thresholds
+// The rule engine automatically picks the correct threshold set based on
+// how many days have passed since first boot.
 //
-// Typical values:  Dry air ≈ 3200,  Water ≈ 1200
-// These defaults are a reasonable starting point but MUST be calibrated
-// for the actual soil type at the deployment site.
+// Stage day boundaries:
+//   Days  1–14  →  SEEDLING    →  STAGE_THRESHOLDS[0]
+//   Days 15–35  →  VEGETATIVE  →  STAGE_THRESHOLDS[1]
+//   Days 36–50  →  FLOWERING   →  STAGE_THRESHOLDS[2]
+//   Days 51–60  →  FRUITING    →  STAGE_THRESHOLDS[3]
+//
+// StageThresholds fields (in order):
+//   soilMin | soilMax | tempMax | blightTempMin | blightTempMax | blightHumMin
 // -----------------------------------------------------------------------------
-#define SOIL_DRY_ADC      3200
-#define SOIL_WET_ADC      1200
+#define STAGE_SEEDLING_END       14
+#define STAGE_VEGETATIVE_END     35
+#define STAGE_FLOWERING_END      50
+#define DEPLOY_DURATION_DAYS     60
 
-// How many ADC samples to average per reading (reduces noise).
-#define ADC_SAMPLES       5
+const StageThresholds STAGE_THRESHOLDS[4] = {
+  {  50.0f,   80.0f,   30.0f,   18.0f,   24.0f,   80.0f  },  // [0] SEEDLING
+  {  40.0f,   85.0f,   33.0f,   18.0f,   26.0f,   85.0f  },  // [1] VEGETATIVE
+  {  60.0f,   85.0f,   32.0f,   18.0f,   26.0f,   80.0f  },  // [2] FLOWERING
+  {  45.0f,   75.0f,   35.0f,   18.0f,   26.0f,   85.0f  },  // [3] FRUITING
+};
 
 // -----------------------------------------------------------------------------
-// Alert Thresholds
-// These are the agronomic values from the SRS (Appendix A).
-// Adjust after observing real conditions at the farm.
+// NVS — Deployment Start Date
+// Stores the Unix timestamp of first boot so the system tracks growth stage
+// across all deep sleep cycles and power cycles.
+// Written ONCE on first boot, never overwritten.
 // -----------------------------------------------------------------------------
-#define THRESHOLD_SOIL_DROUGHT    30.0f   // % — below this = drought alert
-#define THRESHOLD_SOIL_FLOOD      90.0f   // % — above this = flood alert
-#define THRESHOLD_TEMP_HIGH       35.0f   // °C — above this = heat stress alert
-#define THRESHOLD_BLIGHT_TEMP_MIN 18.0f   // °C — blight risk temperature window
-#define THRESHOLD_BLIGHT_TEMP_MAX 26.0f   // °C
-#define THRESHOLD_BLIGHT_HUMIDITY 85.0f   // % — blight risk humidity minimum
-
-// Alert cooldown: minimum gap (seconds) between two SMS for the same alert type.
-// 4 hours = 14400 seconds. Prevents SMS spam for unresolved conditions.
-#define ALERT_COOLDOWN_SECONDS    14400
+#define NVS_NAMESPACE            "agrishield"
+#define NVS_DEPLOY_KEY           "deploy_ts"
 
 // -----------------------------------------------------------------------------
 // Timing
 // -----------------------------------------------------------------------------
-// Deep sleep duration: 15 minutes = 15 * 60 * 1,000,000 microseconds
-#define SLEEP_DURATION_US         (15ULL * 60ULL * 1000000ULL)
-
-// DHT22 warmup delay after power-on before reading (ms). Never go below 2000.
-#define DHT_WARMUP_MS             2500
-
-// SIM800L boot delay after power-on (ms). Needs time to register on GSM.
-#define GSM_BOOT_MS               3000
-
-// Maximum time (ms) to wait for SIM800L to register on GSM network.
-#define GSM_REGISTER_TIMEOUT_MS   30000
-
-// Delay between AT command retries (ms).
-#define AT_RETRY_DELAY_MS         1000
-
-// Hardware watchdog timeout (seconds). If firmware hangs, watchdog resets ESP32.
-// Must be longer than the longest operation (GSM registration = 30s).
-#define WATCHDOG_TIMEOUT_S        60
+#define SLEEP_DURATION_US        (15ULL * 60ULL * 1000000ULL)  // 15 minutes
+#define DHT_WARMUP_MS            2500
+#define WATCHDOG_TIMEOUT_S       60
 
 // -----------------------------------------------------------------------------
 // Offline Buffering
-// If Wi-Fi is unavailable, readings are stored in RTC memory and uploaded
-// in bulk on the next successful connection.
+// Readings stored in RTC memory when Wi-Fi unavailable.
+// Uploaded in bulk on next successful connection.
 // -----------------------------------------------------------------------------
-#define BUFFER_MAX_READINGS       10
+#define BUFFER_MAX_READINGS      10
 
 // -----------------------------------------------------------------------------
-// Firmware Version
-// Stored in Firebase so you can track which node is running which version.
+// Firmware Version — stored in Firebase with every upload
 // -----------------------------------------------------------------------------
-#define FIRMWARE_VERSION          "1.0.0"
+#define FIRMWARE_VERSION         "1.1.0"
 
 // -----------------------------------------------------------------------------
 // Serial Debug
-// Set to 1 during development. Set to 0 before long-term deployment to
-// save the tiny amount of power the USB serial driver uses.
+// Set SERIAL_DEBUG to 0 before final field deployment.
 // -----------------------------------------------------------------------------
-#define SERIAL_DEBUG              1
-#define SERIAL_BAUD               115200
+#define SERIAL_DEBUG             1
+#define SERIAL_BAUD              115200
 
-// Convenience macros so debug prints disappear cleanly in production builds.
 #if SERIAL_DEBUG
-  #define DBG(msg)        Serial.println(msg)
-  #define DBG_VAL(l, v)   { Serial.print(l); Serial.println(v); }
-  #define DBG_F(...)      Serial.printf(__VA_ARGS__)
+  #define DBG(msg)       Serial.println(msg)
+  #define DBG_VAL(l, v)  { Serial.print(l); Serial.println(v); }
+  #define DBG_F(...)     Serial.printf(__VA_ARGS__)
 #else
   #define DBG(msg)
   #define DBG_VAL(l, v)

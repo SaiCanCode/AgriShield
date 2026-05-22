@@ -46,8 +46,27 @@ class AlertsScreen extends ConsumerWidget {
                             child: ListTile(
                               leading: const Icon(Icons.warning_amber_rounded),
                               title: Text(alert.type.toUpperCase()),
-                              subtitle: Text(
-                                'Value: ${alert.value.toStringAsFixed(2)} | Threshold: ${alert.threshold.toStringAsFixed(2)} | SMS sent: ${alert.smsSent ? 'yes' : 'no'}',
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Value: ${alert.value.toStringAsFixed(2)} | Threshold: ${alert.threshold.toStringAsFixed(2)} | SMS sent: ${alert.smsSent ? 'yes' : 'no'}',
+                                  ),
+                                  if (alert.message.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6.0),
+                                      child: Text(alert.message),
+                                    ),
+                                  if (alert.action.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text('Action: ${alert.action}'),
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text('Source: ${alert.source}'),
+                                  ),
+                                ],
                               ),
                               trailing: Text(alert.timestamp.toString()),
                             ),
