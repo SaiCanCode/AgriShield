@@ -51,6 +51,7 @@ lib/config/weather_config.dart
 .env
 .env.*
 !.env.example
+lib/agrishield_firmware/config_local.h
 *.pem
 *.p12
 *.pfx
