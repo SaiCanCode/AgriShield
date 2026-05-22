@@ -61,3 +61,6 @@ lib/agrishield_firmware/config_local.h
 **/service-account*.json
 **/*credentials*.json
 
+
+# VS Code agent files
+.agents/
