@@ -1,31 +1,3 @@
-// =============================================================================
-//  firebase_upload.cpp  —  Wi-Fi + Firebase Realtime Database Upload
-//
-//  Library: mobizt/Firebase-ESP-Client (install via Arduino Library Manager)
-//           Search for "Firebase ESP Client" by Mobizt.
-//
-//  What this module does:
-//    1. Connects to Wi-Fi using credentials from config.h.
-//    2. Authenticates with Firebase anonymously.
-//    3. Uploads one sensor reading per wake cycle as a JSON object to:
-//         /nodes/<NODE_ID>/readings/<unix_timestamp>
-//    4. If an alert fired, also writes an alert entry to:
-//         /nodes/<NODE_ID>/alerts/<unix_timestamp>
-//    5. Updates the node's last_seen timestamp.
-//    6. Uploads any buffered readings from previous offline cycles.
-//    7. Disconnects Wi-Fi before returning, so the caller can sleep.
-//
-//  Offline buffer:
-//    If Wi-Fi is unavailable, readings accumulate in RTC memory (up to
-//    BUFFER_MAX_READINGS). On the next successful Wi-Fi connection, all
-//    buffered readings are uploaded in sequence before sleeping.
-//
-//  Important for junior developers:
-//    - The Firebase path uses forward slashes: /nodes/node_001/readings/1713190800
-//    - The timestamp key MUST be an integer stored as a string.
-//      Firebase orders keys alphabetically. Integer timestamps sort correctly.
-//    - Never query all readings at once in the app — always use limitToLast().
-// =============================================================================
 
 #include "firebase_upload.h"
 #include "config.h"
@@ -47,9 +19,9 @@ static bool _firebaseReady = false;
 RTC_DATA_ATTR static BufferedReading offlineBuffer[BUFFER_MAX_READINGS];
 RTC_DATA_ATTR static int             offlineBufferCount = 0;
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // wifi_connect
-// ─────────────────────────────────────────────────────────────────────────────
+
 bool wifi_connect() {
   DBG("[WIFI] Connecting to: " + String(WIFI_SSID));
 
@@ -70,10 +42,8 @@ bool wifi_connect() {
   DBG_F("[WIFI] Connected. IP: %s  RSSI: %d dBm\n",
         WiFi.localIP().toString().c_str(), WiFi.RSSI());
 
-  // ── NTP Time Sync ────────────────────────────────────────────────────────
-  // Sync the ESP32's internal clock with an NTP server.
-  // We need accurate timestamps for Firebase path keys.
-  // Pool.ntp.org is globally accessible. Offset 3600 = UTC+1 (WAT, Nigeria).
+  // ── NTP Time Sync────────
+
   DBG("[WIFI] Syncing time via NTP...");
   configTime(3600, 0, "pool.ntp.org", "time.nist.gov");
 
@@ -100,10 +70,9 @@ bool wifi_connect() {
   return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // wifi_disconnect
-// Powers off the Wi-Fi radio before sleep.
-// ─────────────────────────────────────────────────────────────────────────────
+
 void wifi_disconnect() {
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
@@ -111,18 +80,16 @@ void wifi_disconnect() {
   DBG("[WIFI] Wi-Fi disconnected and radio powered off.");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // wifi_isConnected
-// ─────────────────────────────────────────────────────────────────────────────
+
 bool wifi_isConnected() {
   return WiFi.status() == WL_CONNECTED;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// firebase_init
-// Authenticates with Firebase anonymously using the project API key.
-// Anonymous auth must be enabled in Firebase Console.
-// ─────────────────────────────────────────────────────────────────────────────
+
+// Firebase Auth and Upload
+
 bool firebase_init() {
   if (!wifi_isConnected()) {
     DBG("[FIREBASE] Cannot initialise — no Wi-Fi connection.");
@@ -163,11 +130,10 @@ bool firebase_init() {
   return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // getUnixTimestamp
-// Returns current Unix timestamp (seconds since 1970-01-01 UTC).
-// Falls back to millis()/1000 if NTP was not available.
-// ─────────────────────────────────────────────────────────────────────────────
+
+
 static uint32_t getUnixTimestamp() {
   time_t now;
   time(&now);
@@ -186,15 +152,13 @@ static bool averagesValid(const SensorReading &r) {
          isfinite(r.avgSoil);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// buildReadingJSON
-// Constructs a FirebaseJson payload for one sensor reading.
-// Must match the schema defined in SRS §6.1 exactly.
-// ─────────────────────────────────────────────────────────────────────────────
-static void buildReadingJSON(FirebaseJson& json,
-                             const SensorReading& r,
-                             const AlertResult&   alert,
-                             bool                 smsSent) {
+
+// buildReadingJSON; Constructs a FirebaseJson payload for one sensor reading.
+
+static void buildReadingJSON(
+  FirebaseJson& json,
+  const SensorReading& r,
+  const AlertResult&   alert, bool                 smsSent) {
   json.clear();
   json.set("ts", (uint32_t)r.timestamp);
 
@@ -227,13 +191,14 @@ static void buildReadingJSON(FirebaseJson& json,
   json.set("fw_version", FIRMWARE_VERSION);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// addToOfflineBuffer
-// Stores a reading in RTC memory when Wi-Fi is unavailable.
-// ─────────────────────────────────────────────────────────────────────────────
-static void addToOfflineBuffer(const SensorReading& r,
-                                const AlertResult&   alert,
-                                bool                 smsSent) {
+
+
+// Store all reading in RTC memory when Wi-Fi is unavailable. OfflineBuffer.
+
+static void addToOfflineBuffer(
+  const SensorReading& r,
+  const AlertResult&   alert,
+  bool                 smsSent) {
   if (offlineBufferCount >= BUFFER_MAX_READINGS) {
     // Buffer full — shift left, dropping oldest reading
     for (int i = 0; i < BUFFER_MAX_READINGS - 1; i++) {
@@ -264,23 +229,21 @@ static void addToOfflineBuffer(const SensorReading& r,
         offlineBufferCount, BUFFER_MAX_READINGS);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // firebase_uploadReading
 // Main upload function. Called from main.ino after every sensing cycle.
-// ─────────────────────────────────────────────────────────────────────────────
-bool firebase_uploadReading(const SensorReading& reading,
-                            const AlertResult&   alert,
-                            bool                 smsSent) {
+
+bool firebase_uploadReading(
+  const SensorReading& reading,
+  const AlertResult&   alert,
+  bool                 smsSent) {
   if (!_firebaseReady) {
     DBG("[FIREBASE] Not ready. Buffering reading for later upload.");
     addToOfflineBuffer(reading, alert, smsSent);
     return false;
   }
 
-  // ── Build the Firebase path ──────────────────────────────────────────────
-  // Path format: /nodes/<NODE_ID>/readings/<unix_timestamp>
-  // The timestamp is used as the key so readings are automatically ordered
-  // chronologically in Firebase.
+ // Firebase build the path as: /nodes/{NODE_ID}/readings/{timestamp}
   char path[120];
   snprintf(path, sizeof(path), "/nodes/%s/readings/%u", NODE_ID, reading.timestamp);
 
@@ -297,8 +260,8 @@ bool firebase_uploadReading(const SensorReading& reading,
   DBG_F("[FIREBASE] Uploading to path: %s\n", path);
   DBG_F("[FIREBASE] Payload: %s\n", json.raw());
 
-  // ── Write to Firebase ────────────────────────────────────────────────────
-  // Firebase.setJSON() writes structured JSON to the specified path.
+  // Write to Firebase
+  
   bool uploadOk = Firebase.RTDB.setJSON(&fbData, path, &json);
 
   if (!uploadOk) {
@@ -308,7 +271,7 @@ bool firebase_uploadReading(const SensorReading& reading,
   }
   DBG("[FIREBASE] Reading uploaded successfully.");
 
-  // ── Write structured alert entry (if alert fired) ───────────────────────
+  //  Write structured alert entry (if alert fired) 
   if (alert.type != ALERT_NONE) {
     char alertPath[120];
     snprintf(alertPath, sizeof(alertPath),
@@ -330,7 +293,7 @@ bool firebase_uploadReading(const SensorReading& reading,
     DBG_F("[FIREBASE] Structured alert JSON written to: %s\n", alertPath);
   }
 
-  // ── Update node last_seen ────────────────────────────────────────────────
+  //  Update node last_seen
   char lastSeenPath[80];
   snprintf(lastSeenPath, sizeof(lastSeenPath), "/nodes/%s/last_seen", NODE_ID);
   Firebase.RTDB.setInt(&fbData, lastSeenPath, reading.timestamp);
@@ -338,11 +301,10 @@ bool firebase_uploadReading(const SensorReading& reading,
   return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // firebase_uploadBuffer
-// Uploads all readings stored in the offline RTC buffer.
-// Called at the start of every Wi-Fi session that succeeds.
-// ─────────────────────────────────────────────────────────────────────────────
+
+
 bool firebase_uploadBuffer() {
   if (offlineBufferCount == 0) {
     DBG("[BUFFER] No buffered readings to upload.");

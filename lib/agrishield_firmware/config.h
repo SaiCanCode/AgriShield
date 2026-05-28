@@ -1,23 +1,16 @@
-// =============================================================================
-//  config.h  —  AgriShield Firmware Configuration
-//  ALL user-specific settings live here. A developer deploying to a new farm
-//  only needs to change values in this file. Nothing else.
-// =============================================================================
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "types.h"   // needs StageThresholds and GrowthStage
+#include "types.h"   // StageThresholds and GrowthStage
 
-// Optional local override file for deployment secrets.
-// Keep credentials in config_local.h (gitignored) when deploying to real farms.
+
 #if __has_include("config_local.h")
   #include "config_local.h"
 #endif
 
-// -----------------------------------------------------------------------------
+
 // Wi-Fi Credentials
-// -----------------------------------------------------------------------------
+
 #ifndef WIFI_SSID
   #define WIFI_SSID             "Sai"
 #endif
@@ -28,12 +21,9 @@
   #define WIFI_TIMEOUT_MS       15000     // 15 seconds before giving up
 #endif
 
-// -----------------------------------------------------------------------------
+
 // Firebase Realtime Database
-// Get these from: Firebase Console → Project Settings → General → Your apps
-// Anonymous sign-in must be ENABLED in Firebase Console →
-//   Authentication → Sign-in method → Anonymous → Enable.
-// -----------------------------------------------------------------------------
+
 #ifndef FIREBASE_HOST
   #define FIREBASE_HOST         "agrishield-71213-default-rtdb.firebaseio.com"
 #endif
@@ -47,21 +37,20 @@
   #define FIREBASE_TIMEOUT_MS   30000
 #endif
 
-// -----------------------------------------------------------------------------
+
 // Farmer Contact
-// Phone number in international format. Language: 0=English 1=Hausa 2=Yoruba 3=Igbo
-// -----------------------------------------------------------------------------
+
 #ifndef FARMER_PHONE
   #define FARMER_PHONE          "+2349029115277"
 #endif
 #ifndef FARMER_LANGUAGE
-  #define FARMER_LANGUAGE       3
+  #define FARMER_LANGUAGE       0   // 0=English, 1=Hausa, 2=Yoruba, 3=Igbo
 #endif
 
-// -----------------------------------------------------------------------------
+
 // SMS Message Templates
-// Automatically selected based on FARMER_LANGUAGE above.
-// -----------------------------------------------------------------------------
+
+
 #if FARMER_LANGUAGE == 0
   #define MSG_DROUGHT   "AGRISHIELD ALERT: Soil moisture critically low. Water your crops now."
   #define MSG_FLOOD     "AGRISHIELD ALERT: Waterlogging detected. Check drainage immediately."
@@ -88,14 +77,14 @@
  
 #endif
 
-// -----------------------------------------------------------------------------
+
 // GSM / SIM800L
 // APN settings per Nigerian carrier:
 //   MTN Nigeria:    internet.ng
 //   Airtel Nigeria: internet
 //   Glo Nigeria:    gloflat
 //   9mobile:        emts.ng
-// -----------------------------------------------------------------------------
+
 #define APN_NAME                 "internet.ng"
 #define APN_USER                 ""
 #define APN_PASS                 ""
@@ -103,10 +92,10 @@
 #define GSM_REGISTER_TIMEOUT_MS  30000
 #define AT_RETRY_DELAY_MS        1000
 
-// -----------------------------------------------------------------------------
+
 // Hardware Pin Assignments
 // Only change if you physically rewire a pin.
-// -----------------------------------------------------------------------------
+
 #define DHT1_PIN              4     // DHT22 DATA → GPIO4 (needs 10kΩ pull-up to 3.3V)
 #define DHT2_PIN              5     // second DHT22
 #define SOIL1_PIN             34    // Soil sensor AOUT → GPIO34 (ADC1 only)
@@ -122,42 +111,25 @@
 #define PIN_SOIL_AOUT_2       SOIL2_PIN
 #define PIN_MOSFET_GATE       SIM800L_POWER
 
-// -----------------------------------------------------------------------------
+
 // Soil Sensor Calibration
-// HOW TO CALIBRATE:
-//   1. Open Serial Monitor at 115200 baud.
-//   2. Hold sensor in completely dry open air for 10 seconds.
-//      Note the stable RAW value → this is SOIL_DRY_ADC.
-//   3. Submerge sensor in water up to the red warning line for 10 seconds.
-//      Note the stable RAW value → this is SOIL_WET_ADC.
-//   4. Update both values below and re-flash.
-// Typical values: Dry ≈ 2700–2900  |  Wet ≈ 700–1000
-// -----------------------------------------------------------------------------
+
 #define SOIL_DRY_ADC          2800
 #define SOIL_WET_ADC           800
 #define ADC_SAMPLES            5    // samples averaged per reading
 
-// -----------------------------------------------------------------------------
+
 // Alert Cooldown
-// Minimum gap in seconds between two SMS alerts of the same type.
-// 14400 = 4 hours. Prevents SMS spam for unresolved conditions.
-// -----------------------------------------------------------------------------
+
 #define ALERT_COOLDOWN_SECONDS   14400
 
-// -----------------------------------------------------------------------------
+
 // Growth Stage Thresholds
-// The rule engine automatically picks the correct threshold set based on
-// how many days have passed since first boot.
-//
-// Stage day boundaries:
-//   Days  1–14  →  SEEDLING    →  STAGE_THRESHOLDS[0]
-//   Days 15–35  →  VEGETATIVE  →  STAGE_THRESHOLDS[1]
-//   Days 36–50  →  FLOWERING   →  STAGE_THRESHOLDS[2]
-//   Days 51–60  →  FRUITING    →  STAGE_THRESHOLDS[3]
-//
+// The rule engine automatically picks the correct threshold set based on how many days have passed since first boot.
+
 // StageThresholds fields (in order):
-//   soilMin | soilMax | tempMax | blightTempMin | blightTempMax | blightHumMin
-// -----------------------------------------------------------------------------
+//soilMin | soilMax | tempMax | blightTempMin | blightTempMax | blightHumMin
+
 #define STAGE_SEEDLING_END       14
 #define STAGE_VEGETATIVE_END     35
 #define STAGE_FLOWERING_END      50
@@ -170,38 +142,38 @@ const StageThresholds STAGE_THRESHOLDS[4] = {
   {  45.0f,   75.0f,   35.0f,   18.0f,   26.0f,   85.0f  },  // [3] FRUITING
 };
 
-// -----------------------------------------------------------------------------
+
 // NVS — Deployment Start Date
 // Stores the Unix timestamp of first boot so the system tracks growth stage
 // across all deep sleep cycles and power cycles.
 // Written ONCE on first boot, never overwritten.
-// -----------------------------------------------------------------------------
+
 #define NVS_NAMESPACE            "agrishield"
 #define NVS_DEPLOY_KEY           "deploy_ts"
 
-// -----------------------------------------------------------------------------
+
 // Timing
-// -----------------------------------------------------------------------------
+
 #define SLEEP_DURATION_US        (15ULL * 60ULL * 1000000ULL)  // 15 minutes
 #define DHT_WARMUP_MS            2500
 #define WATCHDOG_TIMEOUT_S       60
 
-// -----------------------------------------------------------------------------
+
 // Offline Buffering
 // Readings stored in RTC memory when Wi-Fi unavailable.
 // Uploaded in bulk on next successful connection.
-// -----------------------------------------------------------------------------
+
 #define BUFFER_MAX_READINGS      10
 
-// -----------------------------------------------------------------------------
+
 // Firmware Version — stored in Firebase with every upload
-// -----------------------------------------------------------------------------
+
 #define FIRMWARE_VERSION         "1.1.0"
 
-// -----------------------------------------------------------------------------
+
 // Serial Debug
 // Set SERIAL_DEBUG to 0 before final field deployment.
-// -----------------------------------------------------------------------------
+
 #define SERIAL_DEBUG             1
 #define SERIAL_BAUD              115200
 
