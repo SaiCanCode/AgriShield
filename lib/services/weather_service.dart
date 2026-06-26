@@ -62,10 +62,6 @@ class WeatherService {
         throw Exception('Failed to fetch forecast: ${forecastResponse.statusCode}');
       }
 
-      // Debug: Log the responses
-     /* print('Current weather response: ${currentResponse.data}');
-      print('Forecast response: ${forecastResponse.data}'); */
-
       return WeatherData.fromResponses(
         currentJson: currentResponse.data as Map<String, dynamic>,
         forecastJson: forecastResponse.data as Map<String, dynamic>,

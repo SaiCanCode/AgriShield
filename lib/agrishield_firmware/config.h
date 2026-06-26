@@ -30,9 +30,18 @@
 #ifndef FIREBASE_API_KEY
   #define FIREBASE_API_KEY      "AIzaSyCTVb_O_yibqPjQNLbEIcZj275nh8UeOjg"
 #endif
-#ifndef NODE_ID
-  #define NODE_ID               "node_001"
+
+// Define two node IDs (physical sensor groups). NODE_ID kept as alias for compat.
+#ifndef NODE1_ID
+  #define NODE1_ID              "node_001"
 #endif
+#ifndef NODE2_ID
+  #define NODE2_ID              "node_002"
+#endif
+#ifndef NODE_ID
+  #define NODE_ID               NODE1_ID
+#endif
+
 #ifndef FIREBASE_TIMEOUT_MS
   #define FIREBASE_TIMEOUT_MS   30000
 #endif
@@ -96,13 +105,18 @@
 // Hardware Pin Assignments
 // Only change if you physically rewire a pin.
 
-#define DHT1_PIN              4     // DHT22 DATA → GPIO4 (needs 10kΩ pull-up to 3.3V)
-#define DHT2_PIN              5     // second DHT22
+#define DHT1_PIN              25    // DHT22 DATA → GPIO4 (needs 10kΩ pull-up to 3.3V)
+#define DHT2_PIN              26     // second DHT22
 #define SOIL1_PIN             34    // Soil sensor AOUT → GPIO34 (ADC1 only)
 #define SOIL2_PIN             35    // second soil sensor → GPIO35 (ADC1 only)
 #define SIM800L_POWER         21    // MOSFET gate — controls SIM800L power
 #define SIM800L_RX            16    // ESP32 RX ← SIM800L TX (direct connection)
 #define SIM800L_TX            17    // ESP32 TX → SIM800L RX (via 1kΩ/2kΩ divider)
+
+
+// Sensor Calibration Offsets
+#define DHT1_TEMP_OFFSET      0.0f    // no correction needed
+#define DHT2_TEMP_OFFSET     -2.6f   // board heat compensation
 
 // Compatibility aliases used by existing modules.
 #define PIN_DHT22             DHT1_PIN

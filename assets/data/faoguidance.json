@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "source": {
+    "organization": "FAO",
+    "title": "Crop Information: Tomato – Water Relations and Water Management",
+    "url": "https://www.fao.org/land-water/databases-and-software/crop-information/tomato/en/",
+    "notes": "Guidance covers water requirements, irrigation scheduling, salinity tolerance, and climate conditions for tomato production. All thresholds and recommendations are drawn directly from FAO source text. Where the source does not provide a numeric threshold, the field is set to null and explained in the alert notes."
+  },
+  "solutions": [
+    {
+      "solutionId": "sol_drip_irrigation",
+      "title": "Switch to Drip or Trickle Irrigation",
+      "solution": "Replace sprinkler irrigation with drip or trickle irrigation to maintain high soil moisture without wetting foliage.",
+      "rationale": "Sprinkler irrigation increases incidence of fungal diseases and bacterial canker, reduces fruit set, and increases fruit rotting. Drip irrigation meets the crop's demand for high soil water content without leaf wetting."
+    },
+    {
+      "solutionId": "sol_avoid_sprinkler_yield_formation",
+      "title": "Avoid Sprinkler Irrigation During Yield Formation",
+      "solution": "Stop or reduce sprinkler irrigation during the yield formation stage if fruit rot is observed or risk is high. Switch to drip or furrow irrigation.",
+      "rationale": "Frequent sprinkler irrigation during yield formation worsens fruit rot. FAO explicitly recommends avoiding it when rot is a problem."
+    },
+    {
+      "solutionId": "sol_reduce_irrigation_flowering",
+      "title": "Reduce Irrigation During Flowering Stage",
+      "solution": "Limit irrigation during the flowering stage. Avoid rates that cause excessive vegetative growth or delayed ripening. Water supply after fruit set should not stimulate new vegetative growth at the expense of fruit development.",
+      "rationale": "Excessive watering during flowering increases flower drop and reduces fruit set. FAO warns this also delays ripening."
+    },
+    {
+      "solutionId": "sol_withhold_irrigation_force_flowering",
+      "title": "Withhold Irrigation to Encourage Uniform Flowering",
+      "solution": "Temporarily withhold irrigation during early flowering to force less mature plants into flowering, achieving uniform ripening. Monitor mature plants closely to avoid damage.",
+      "rationale": "Controlled moisture stress during early flowering can synchronise flowering across the crop, which is useful for single-harvest mechanical picking. FAO advises caution to avoid damaging mature plants."
+    },
+    {
+      "solutionId": "sol_frequent_light_irrigation",
+      "title": "Apply Frequent Light Irrigation",
+      "solution": "Apply light, frequent irrigations distributed across the growing period, keeping soil depletion below 40% (p < 0.4) throughout all growth stages.",
+      "rationale": "Frequent light irrigation improves fruit size, shape, juiciness, and colour. FAO identifies this as best practice for multi-harvest salad tomato production."
+    },
+    {
+      "solutionId": "sol_heavy_infrequent_irrigation",
+      "title": "Apply Heavy, Infrequent Irrigation (Paste or Single Harvest)",
+      "solution": "Use heavy, infrequent irrigation for crops grown for paste or single mechanical harvest. Apply the last heavy irrigation well before harvest and allow soil depletion to reach 60–70% during ripening.",
+      "rationale": "For single-harvest paste production, uniform ripening is required. Reducing water before harvest concentrates solids and improves processing quality."
+    },
+    {
+      "solutionId": "sol_prioritize_critical_stage_water",
+      "title": "Prioritise Water at Transplanting, Flowering, and Yield Formation",
+      "solution": "When water supply is limited, concentrate irrigation on three critical stages: transplanting (establishment), flowering, and yield formation. Water can be reduced during vegetative and ripening stages.",
+      "rationale": "FAO identifies these as the stages most sensitive to water deficit. Deficit during flowering causes flower drop; deficit during yield formation reduces fruit set and quality."
+    },
+    {
+      "solutionId": "sol_avoid_irregular_irrigation",
+      "title": "Maintain Consistent Irrigation Schedule",
+      "solution": "Avoid heavy irregular irrigations and alternating dry and wet periods. Maintain a steady, controlled water supply throughout the growing period.",
+      "rationale": "Irregular irrigation and alternating wet/dry cycles reduce yield and quality. FAO states that prolonged water deficit leads to fruit cracking."
+    },
+    {
+      "solutionId": "sol_leach_salts",
+      "title": "Leach Salts Before or During Initial Irrigation",
+      "solution": "Apply pre-irrigation or over-water during initial irrigation to leach accumulated salts from the root zone before germination and early plant development.",
+      "rationale": "Tomato is most sensitive to salinity during germination and early development. FAO notes leaching is frequently practised at this stage to prevent yield loss. Yield losses begin above ECe 2.5 mmhos/cm."
+    },
+    {
+      "solutionId": "sol_manage_high_humidity_disease",
+      "title": "Monitor and Manage Disease Risk in High Humidity",
+      "solution": "Increase scouting for foliar diseases, fruit rot, and pest outbreaks. Prefer dry growing conditions. Avoid overhead irrigation when humidity is persistently high. Consider switching to drip irrigation.",
+      "rationale": "FAO states that high humidity significantly increases the incidence of pests, diseases, and fruit rotting. Persistent moist or rainy weather is a primary cause of foliar disease."
+    },
+    {
+      "solutionId": "sol_avoid_frost_sowing",
+      "title": "Avoid Sowing During Frost-Risk Periods",
+      "solution": "Do not sow or transplant tomatoes during months prone to frost. Plan planting dates to keep the crop within the daily mean temperature range of 18–25°C.",
+      "rationale": "Tomato is very sensitive to frost. Temperatures outside the optimum range reduce growth, yield, and fruit quality. FAO explicitly advises avoiding cold winter months in frost-prone areas."
+    },
+    {
+      "solutionId": "sol_improve_drainage",
+      "title": "Improve Field Drainage to Prevent Waterlogging",
+      "solution": "Ensure fields have adequate drainage before planting. Avoid low-lying areas prone to water accumulation. Use raised beds or ridges if necessary.",
+      "rationale": "FAO states that waterlogging increases the incidence of bacterial wilt. Tomatoes require well-drained, light loam soils."
+    },
+    {
+      "solutionId": "sol_night_sprinkler_poor_water",
+      "title": "Shift Sprinkler to Night and Align with Wind Direction",
+      "solution": "If sprinkler irrigation must be used with poor-quality water, apply at night and align sprinkler lines with the direction of the prevailing wind to minimise leaf burn.",
+      "rationale": "Poor quality water (excess sodium or fluoride) causes leaf burn under sprinkler irrigation. FAO recommends night application and wind-aligned positioning as mitigation when drip is unavailable."
+    }
+  ],
+  "alerts": [
+    {
+      "alertType": "temperatureHighDay",
+      "metric": "meanDailyTemperature",
+      "operator": "greaterThan",
+      "threshold": 25,
+      "unit": "°C",
+      "severity": "warning",
+      "solutionId": "sol_manage_high_humidity_disease",
+      "notes": "Temperatures above 25°C combined with high humidity and strong wind reduce yield. The alert is most critical when high temperature coincides with high humidity. FAO lists 18–25°C as the optimum daily mean range."
+    },
+    {
+      "alertType": "temperatureLowDay",
+      "metric": "meanDailyTemperature",
+      "operator": "lessThan",
+      "threshold": 18,
+      "unit": "°C",
+      "severity": "warning",
+      "solutionId": "sol_avoid_frost_sowing",
+      "notes": "Below 18°C is outside the FAO optimum daily mean range of 18–25°C. Frost (0°C or below) causes severe crop loss. Threshold set at 18°C as the lower bound of the optimum range."
+    },
+    {
+      "alertType": "temperatureLowFrost",
+      "metric": "meanDailyTemperature",
+      "operator": "lessThan",
+      "threshold": 0,
+      "unit": "°C",
+      "severity": "critical",
+      "solutionId": "sol_avoid_frost_sowing",
+      "notes": "FAO explicitly states tomato is very sensitive to frost. This is a critical alert requiring immediate protective action or crop loss is expected."
+    },
+    {
+      "alertType": "nightTemperatureHigh",
+      "metric": "nightTemperature",
+      "operator": "greaterThan",
+      "threshold": 20,
+      "unit": "°C",
+      "severity": "warning",
+      "solutionId": "sol_manage_high_humidity_disease",
+      "notes": "Night temperatures above 20°C combined with high humidity and low sunshine lead to excessive vegetative growth and poor fruit production. FAO optimum night range is 10–20°C. Multi-condition trigger; single threshold is indicative only."
+    },
+    {
+      "alertType": "nightTemperatureLow",
+      "metric": "nightTemperature",
+      "operator": "lessThan",
+      "threshold": 10,
+      "unit": "°C",
+      "severity": "warning",
+      "solutionId": "sol_avoid_frost_sowing",
+      "notes": "FAO optimum night temperature range is 10–20°C. Below 10°C at night is outside the safe range and reduces growth and fruit quality."
+    },
+    {
+      "alertType": "humidityHigh",
+      "metric": "relativeHumidity",
+      "operator": "greaterThan",
+      "threshold": null,
+      "unit": "%",
+      "severity": "warning",
+      "solutionId": "sol_manage_high_humidity_disease",
+      "notes": "FAO states high humidity increases pests, disease, and fruit rot but does not specify a numeric threshold. Threshold left null. Recommend combining with temperature alerts for full risk assessment."
+    },
+    {
+      "alertType": "soilMoistureDepletionHigh",
+      "metric": "soilMoistureDepletion",
+      "operator": "greaterThan",
+      "threshold": 40,
+      "unit": "%",
+      "severity": "warning",
+      "solutionId": "sol_frequent_light_irrigation",
+      "notes": "For multi-harvest salad tomatoes, FAO sets the depletion coefficient p at 0.4 during mid-season (40% depletion). Depletion above 40% triggers an irrigation event. Also applies when ETm is 5–6 mm/day."
+    },
+    {
+      "alertType": "soilMoistureDepletionHighRipeningPaste",
+      "metric": "soilMoistureDepletion",
+      "operator": "greaterThan",
+      "threshold": 70,
+      "unit": "%",
+      "severity": "warning",
+      "solutionId": "sol_heavy_infrequent_irrigation",
+      "notes": "For single-harvest paste crops, FAO allows depletion to rise to 60–70% during the ripening stage only. Alert triggers at 70%, the upper bound of the FAO-stated range."
+    },
+    {
+      "alertType": "soilMoistureDepletionEstablishment",
+      "metric": "soilMoistureDepletion",
+      "operator": "greaterThan",
+      "threshold": 30,
+      "unit": "%",
+      "severity": "critical",
+      "solutionId": "sol_prioritize_critical_stage_water",
+      "notes": "FAO depletion coefficient p = 0.3 during the initial/establishment stage. Water deficit at transplanting is most damaging. Trigger irrigation when depletion exceeds 30% during the first 25–35 days after transplanting."
+    },
+    {
+      "alertType": "waterDeficitFlowering",
+      "metric": "soilMoistureDepletion",
+      "operator": "greaterThan",
+      "threshold": 40,
+      "unit": "%",
+      "severity": "critical",
+      "solutionId": "sol_prioritize_critical_stage_water",
+      "notes": "FAO identifies flowering as one of the most water-sensitive stages. Water deficit during flowering causes flower drop. Tie this alert to the flowering crop stage (approximately days 45–75 after transplanting)."
+    },
+    {
+      "alertType": "waterDeficitYieldFormation",
+      "metric": "soilMoistureDepletion",
+      "operator": "greaterThan",
+      "threshold": 40,
+      "unit": "%",
+      "severity": "critical",
+      "solutionId": "sol_prioritize_critical_stage_water",
+      "notes": "FAO identifies yield formation as one of the most water-sensitive stages. Trigger this alert during stage 3 (yield formation). Same depletion threshold (p = 0.4) as the general mid-season value."
+    },
+    {
+      "alertType": "excessiveIrrigationFlowering",
+      "metric": "irrigationRateAtFloweringStage",
+      "operator": "greaterThan",
+      "threshold": null,
+      "unit": null,
+      "severity": "warning",
+      "solutionId": "sol_reduce_irrigation_flowering",
+      "notes": "FAO warns against excessive watering during flowering but does not give a specific volume or rate threshold. Threshold left null. Recommend triggering when irrigation rate during flowering exceeds the rate applied during the vegetative stage."
+    },
+    {
+      "alertType": "prolongedWaterDeficit",
+      "metric": "consecutiveDryDays",
+      "operator": "greaterThan",
+      "threshold": null,
+      "unit": "days",
+      "severity": "warning",
+      "solutionId": "sol_avoid_irregular_irrigation",
+      "notes": "FAO states prolonged water deficit leads to fruit cracking. No specific duration is given. Threshold left null. Recommend triggering if soil depletion remains above 50% for multiple consecutive days."
+    },
+    {
+      "alertType": "waterloggingRisk",
+      "metric": "soilSaturation",
+      "operator": "equals",
+      "threshold": null,
+      "unit": null,
+      "severity": "critical",
+      "solutionId": "sol_improve_drainage",
+      "notes": "FAO states waterlogging increases incidence of bacterial wilt. No numeric saturation threshold is provided in the source. Trigger based on standing water observation or soil saturation sensor. Threshold left null."
+    },
+    {
+      "alertType": "soilSalinityModerate",
+      "metric": "soilElectricalConductivity",
+      "operator": "greaterThan",
+      "threshold": 2.5,
+      "unit": "mmhos/cm",
+      "severity": "info",
+      "solutionId": "sol_leach_salts",
+      "notes": "FAO yield loss table: 0% loss at ECe 2.5. Threshold of 2.5 is the onset point. Leaching recommended before planting, especially ahead of germination and early development which are the most sensitive periods."
+    },
+    {
+      "alertType": "soilSalinityHigh",
+      "metric": "soilElectricalConductivity",
+      "operator": "greaterThan",
+      "threshold": 3.5,
+      "unit": "mmhos/cm",
+      "severity": "warning",
+      "solutionId": "sol_leach_salts",
+      "notes": "FAO yield loss table: approximately 10% yield loss at ECe 3.5 mmhos/cm. Leaching before planting is required. At ECe 5.0 loss rises to 25%; at ECe 7.6 it reaches 50%; at ECe 12.5 total loss occurs."
+    },
+    {
+      "alertType": "soilSalinityCritical",
+      "metric": "soilElectricalConductivity",
+      "operator": "greaterThan",
+      "threshold": 5.0,
+      "unit": "mmhos/cm",
+      "severity": "critical",
+      "solutionId": "sol_leach_salts",
+      "notes": "FAO yield loss table: approximately 25% yield loss at ECe 5.0. Remediation beyond leaching (e.g. variety change, field relocation) may be necessary. At ECe 7.6 yield loss reaches 50%."
+    },
+    {
+      "alertType": "sprinklerUseHighHumidity",
+      "metric": "irrigationMethod",
+      "operator": "equals",
+      "threshold": null,
+      "unit": null,
+      "severity": "warning",
+      "solutionId": "sol_drip_irrigation",
+      "notes": "When sprinkler irrigation is active and ambient humidity is high, FAO warns of significantly increased fungal disease and bacterial canker risk, reduced fruit set, and increased fruit rotting. No numeric humidity threshold given. Pair with humidityHigh alert."
+    },
+    {
+      "alertType": "sprinklerUsePoorWaterQuality",
+      "metric": "irrigationWaterQuality",
+      "operator": "equals",
+      "threshold": null,
+      "unit": null,
+      "severity": "warning",
+      "solutionId": "sol_night_sprinkler_poor_water",
+      "notes": "When sprinkler irrigation is used with poor-quality water (excess sodium or fluoride), FAO states leaf burn will occur. Recommend switching to drip irrigation. If drip is unavailable, apply at night aligned with wind direction."
+    },
+    {
+      "alertType": "fruitRotObserved",
+      "metric": "fruitRotPresence",
+      "operator": "equals",
+      "threshold": null,
+      "unit": null,
+      "severity": "warning",
+      "solutionId": "sol_avoid_sprinkler_yield_formation",
+      "notes": "If fruit rot is observed or risk is elevated during yield formation, FAO explicitly recommends avoiding frequent sprinkler irrigation. Threshold is qualitative (presence/absence). Switch to furrow or drip irrigation."
+    }
+  ]
+}

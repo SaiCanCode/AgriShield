@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:agrishield2/auth/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,16 +20,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   void _checkAuthAndNavigate() {
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (!mounted) return;
-
-      final authService = ref.read(authServiceProvider);
-      if (authService.currentUser != null) {
-        Navigator.of(context).pushReplacementNamed(Routes.dashboard);
-      } else {
-        Navigator.of(context).pushReplacementNamed(Routes.login);
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_navigateAfterAuthResolution());
     });
+  }
+
+  Future<void> _navigateAfterAuthResolution() async {
+    final authService = ref.read(authServiceProvider);
+    final user = await authService.authStateChanges.first;
+    if (!mounted) return;
+
+    if (user != null) {
+      Navigator.of(context).pushReplacementNamed(Routes.dashboard);
+    } else {
+      Navigator.of(context).pushReplacementNamed(Routes.login);
+    }
   }
 
   @override

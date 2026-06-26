@@ -7,10 +7,24 @@ import '../core/theme.dart';
 import 'weather_controller.dart';
 import 'weather_model.dart';
 
-class WeatherScreen extends ConsumerWidget {
+class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
-  Future<void> _useCurrentLocation(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
+}
+
+class _WeatherScreenState extends ConsumerState<WeatherScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(weatherControllerProvider.notifier).ensureLoaded();
+    });
+  }
+
+  Future<void> _useCurrentLocation(BuildContext context) async {
     final locationEnabled = await Geolocator.isLocationServiceEnabled();
     if (!locationEnabled) {
       if (context.mounted) {
@@ -43,7 +57,7 @@ class WeatherScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final routes = ['/dashboard', '/alerts', '/node-status', '/history', '/settings'];
     final weatherAsync = ref.watch(weatherControllerProvider);
     final theme = Theme.of(context);
@@ -71,8 +85,8 @@ class WeatherScreen extends ConsumerWidget {
                             flex: 3,
                             child: _CurrentWeatherPanel(
                               weather: weather,
-                              onRefresh: () => ref.refresh(weatherControllerProvider),
-                              onUseLocation: () => _useCurrentLocation(context, ref),
+                              onRefresh: () => ref.read(weatherControllerProvider.notifier).refresh(),
+                              onUseLocation: () => _useCurrentLocation(context),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -87,8 +101,8 @@ class WeatherScreen extends ConsumerWidget {
                         children: [
                           _CurrentWeatherPanel(
                             weather: weather,
-                            onRefresh: () => ref.refresh(weatherControllerProvider),
-                            onUseLocation: () => _useCurrentLocation(context, ref),
+                            onRefresh: () => ref.read(weatherControllerProvider.notifier).refresh(),
+                            onUseLocation: () => _useCurrentLocation(context),
                           ),
                           const SizedBox(height: 16),
                           _ForecastPanel(weather: weather),
@@ -122,7 +136,7 @@ class WeatherScreen extends ConsumerWidget {
                       SizedBox(
                         width: 180,
                         child: ElevatedButton(
-                          onPressed: () => ref.refresh(weatherControllerProvider),
+                          onPressed: () => ref.read(weatherControllerProvider.notifier).refresh(),
                           child: const Text('Retry'),
                         ),
                       ),
@@ -216,6 +230,15 @@ class _CurrentWeatherPanel extends StatelessWidget {
               weather.condition,
               style: theme.textTheme.titleMedium?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
             ),
+            if (weather.updatedAtUtc != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _updatedAgoLabel(weather.updatedAtUtc!),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.62),
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             Text(
               'Feels like ${weather.feelsLike.toStringAsFixed(1)}°C',
@@ -259,6 +282,16 @@ class _CurrentWeatherPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+String _updatedAgoLabel(DateTime updatedAtUtc) {
+  final minutes = DateTime.now().toUtc().difference(updatedAtUtc).inMinutes;
+  if (minutes <= 0) return 'Updated just now';
+  if (minutes < 60) return 'Updated $minutes min ago';
+  final hours = minutes ~/ 60;
+  if (hours < 24) return 'Updated $hours h ago';
+  final days = hours ~/ 24;
+  return 'Updated $days d ago';
 }
 
 class _ForecastPanel extends StatelessWidget {

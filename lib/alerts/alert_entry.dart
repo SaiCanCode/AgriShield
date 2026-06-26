@@ -12,7 +12,7 @@ class AlertEntry {
   final int severity;
   final String message;
   final String action;
-  final String source;
+  final String nodeId;
 
   const AlertEntry({
     required this.alertId,
@@ -25,13 +25,14 @@ class AlertEntry {
     required this.severity,
     required this.message,
     required this.action,
-    required this.source,
+    this.nodeId = 'node_001',
   });
 
   factory AlertEntry.fromMap(
     Map<String, dynamic> map, {
     required int timestamp,
     required String alertId,
+    required String nodeId,
   }) {
     final trigger = _firstNonNull(map['trigger_value'], map['triggerValue'], map['value'], map['threshold']);
     final double triggerVal = _toDouble(trigger);
@@ -50,7 +51,7 @@ class AlertEntry {
       severity: _toInt(map['severity']),
       message: _toString(_firstNonNull(map['message'], map['msg']), ''),
       action: _toString(map['action'], ''),
-      source: _toString(map['source'], 'server'),
+      nodeId: nodeId,
     );
   }
 

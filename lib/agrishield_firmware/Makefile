@@ -1,0 +1,3 @@
+start:
+	gcc 
+PHONY:

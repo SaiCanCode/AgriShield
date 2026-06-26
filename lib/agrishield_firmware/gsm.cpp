@@ -89,7 +89,7 @@ bool gsm_init() {
 
   // ── Step 2: Open UART2 ──────────────────────────────────────────────────
   // Pins are sourced from config.h for consistent wiring configuration.
-  sim800.begin(9600, SERIAL_8N1, SIM800L_RX, SIM800L_TX);
+  sim800.begin(115200, SERIAL_8N1, SIM800L_RX, SIM800L_TX);
   delay(500);
   clearBuffer();
 

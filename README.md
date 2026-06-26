@@ -107,6 +107,18 @@ dependencies:
 
 > **Important:** `firebase_core`, `firebase_database`, and `firebase_auth` share a native SDK. Always upgrade them together. Version mismatches cause runtime crashes.
 
+### Runtime Configuration
+
+Pass environment variables at build/run time so secrets are not hardcoded:
+
+```bash
+flutter run -d chrome \
+  --dart-define=FIREBASE_DATABASE_URL=https://agrishield-71213-default-rtdb.firebaseio.com \
+  --dart-define=WEATHER_API_KEY=UNhOU8ORy04h6hQjM5ByDA8Zhtr6liay
+```
+
+Both values have safe fallbacks for local development, but using `--dart-define` is recommended for production builds.
+
 ---
 
 ## Repository Structure

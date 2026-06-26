@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/readings_provider.dart';
-// ignore: unused_import
-import '../models/sensor_reading.dart';
 
 class LatestReadingCard extends ConsumerWidget {
   final String nodeId;

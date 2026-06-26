@@ -46,6 +46,7 @@ app.*.map.json
 
 # API Keys and Sensitive Configuration
 lib/config/weather_config.dart
+lib/config/firebase_options.dart
 
 # Local secrets / environment files
 .env

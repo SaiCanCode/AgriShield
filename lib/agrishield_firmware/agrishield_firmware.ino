@@ -91,7 +91,7 @@ void loop() {
 
   // New structured rule API: evaluateRules(reading, nowUnix, outAlert)
   AlertResult alert;
-  bool hasAlert = evaluateRules(reading, reading.timestamp, alert);
+  bool hasAlert = evaluateRules(reading, reading.timestamp, alert); 
 
   if (!hasAlert || alert.type == ALERT_NONE) {
     DBG("[MAIN] Rule engine: ALL CLEAR — no alert conditions detected.");

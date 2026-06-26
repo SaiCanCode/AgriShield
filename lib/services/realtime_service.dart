@@ -3,20 +3,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import '../config/firebase_config.dart';
 import '../alerts/alert_entry.dart';
 import '../models/sensor_reading.dart';
 
 class RealtimeService {
   final FirebaseDatabase _db;
 
-  static const String _databaseUrl =
-      'https://agrishield-71213-default-rtdb.firebaseio.com';
-
   RealtimeService({FirebaseDatabase? database})
       : _db = database ??
             FirebaseDatabase.instanceFor(
               app: Firebase.app(),
-              databaseURL: _databaseUrl,
+              databaseURL: firebaseDatabaseUrl,
             );
 
   /// Streams the most recent reading object for [nodeId].
@@ -49,7 +47,7 @@ class RealtimeService {
             }
           }
 
-          return SensorReading.fromMap(map, timestamp: ts);
+          return SensorReading.fromMap(map, timestamp: ts, nodeId: nodeId);
         }
       }
       return null;
@@ -87,6 +85,7 @@ class RealtimeService {
             payload,
             timestamp: timestamp,
             alertId: entry.key.toString(),
+            nodeId: nodeId,
           ),
         );
       }

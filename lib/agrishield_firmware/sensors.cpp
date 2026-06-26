@@ -3,17 +3,7 @@
 //
 //  Handles:
 //    - DHT22 temperature and humidity reading (with error detection)
-//    - Capacitive soil moisture reading (with ADC averaging + calibration)
-//
-//  Key design decisions:
-//    - ADC readings are averaged over ADC_SAMPLES to reduce noise.
-//    - ADC2 pins are NOT used because they conflict with Wi-Fi (SRS §4.1.3).
-//      GPIO34 is ADC1, safe while Wi-Fi is active.
-//    - DHT22 needs a 2.5-second warmup after power-on. This is enforced here.
-//    - If DHT22 returns NaN (sensor fault or missing), dhtOk is set false
-//      and the reading cycle continues — we don't hard-stop the system.
-// =============================================================================
-
+//    - Capacitive soil moisture reading (with ADC averaging + calibration
 #include "sensors.h"
 #include "config.h"
 #include <DHT.h>
@@ -72,10 +62,10 @@ SensorReading sensors_readAll() {
   DBG("[SENSOR] Waiting for DHT22 warmup...");
   delay(DHT_WARMUP_MS);
 
-  float temp1 = dht1.readTemperature();
-  float hum1  = dht1.readHumidity();
-  float temp2 = dht2.readTemperature();
-  float hum2  = dht2.readHumidity();
+float temp1 = dht1.readTemperature() + DHT1_TEMP_OFFSET;
+float hum1  = dht1.readHumidity();
+float temp2 = dht2.readTemperature() + DHT2_TEMP_OFFSET;
+float hum2  = dht2.readHumidity();
 
   bool dht1Ok = !(isnan(temp1) || isnan(hum1));
   bool dht2Ok = !(isnan(temp2) || isnan(hum2));

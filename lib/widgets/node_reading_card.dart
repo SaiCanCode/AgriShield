@@ -26,7 +26,6 @@ class NodeReadingCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncReading = ref.watch(latestReadingProvider(nodeId));
-    final asyncRaw = ref.watch(nodeRawReadingsProvider(nodeId));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -38,6 +37,7 @@ class NodeReadingCard extends ConsumerWidget {
           data: (reading) {
             if (reading == null) {
               // Show raw snapshot if available to help debug import/format issues
+              final asyncRaw = ref.watch(nodeRawReadingsProvider(nodeId));
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

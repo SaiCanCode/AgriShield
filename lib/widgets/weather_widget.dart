@@ -4,11 +4,25 @@ import '../core/agri_text.dart';
 import '../core/theme.dart';
 import '../weather/weather_controller.dart';
 
-class WeatherWidget extends ConsumerWidget {
+class WeatherWidget extends ConsumerStatefulWidget {
   const WeatherWidget({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WeatherWidget> createState() => _WeatherWidgetState();
+}
+
+class _WeatherWidgetState extends ConsumerState<WeatherWidget> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(weatherControllerProvider.notifier).ensureLoaded();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final weatherAsync = ref.watch(weatherControllerProvider);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -131,6 +145,15 @@ class WeatherWidget extends ConsumerWidget {
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
+                          if (weather.updatedAtUtc != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _updatedAgoLabel(weather.updatedAtUtc!),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.62),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                           LayoutBuilder(
                             builder: (context, metricConstraints) {
@@ -242,6 +265,16 @@ class WeatherWidget extends ConsumerWidget {
     );
   }
 
+}
+
+String _updatedAgoLabel(DateTime updatedAtUtc) {
+  final minutes = DateTime.now().toUtc().difference(updatedAtUtc).inMinutes;
+  if (minutes <= 0) return 'Updated just now';
+  if (minutes < 60) return 'Updated $minutes min ago';
+  final hours = minutes ~/ 60;
+  if (hours < 24) return 'Updated $hours h ago';
+  final days = hours ~/ 24;
+  return 'Updated $days d ago';
 }
 
 IconData _weatherIcon(String condition) {

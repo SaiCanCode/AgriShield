@@ -192,6 +192,67 @@ static void buildReadingJSON(
 }
 
 
+// buildNodeJSON; Constructs a FirebaseJson payload for one node (sensor group 1 or 2).
+
+static void buildNodeJSON(
+  FirebaseJson& json,
+  const SensorReading& r,
+  const AlertResult&   alert,
+  bool                 smsSent,
+  int                  nodeIndex) {
+
+  json.clear();
+  json.set("ts", (uint32_t)r.timestamp);
+
+  // sensors object — only this node's sensors
+  FirebaseJson sensors;
+  if (nodeIndex == 1) {
+    sensors.set("temp",  r.dhtOk ? r.temp1 : -1.0f);
+    sensors.set("hum",   r.dhtOk ? r.humidity1 : -1.0f);
+    sensors.set("soil",  r.soilOk ? r.soil1 : -1.0f);
+    sensors.set("temp1", r.dhtOk ? r.temp1 : -1.0f);
+    sensors.set("hum1",  r.dhtOk ? r.humidity1 : -1.0f);
+  } else {
+    sensors.set("temp",  r.dhtOk ? r.temp2 : -1.0f);
+    sensors.set("hum",   r.dhtOk ? r.humidity2 : -1.0f);
+    sensors.set("soil",  r.soilOk ? r.soil2 : -1.0f); 
+    sensors.set("temp2", r.dhtOk ? r.temp2 : -1.0f);
+    sensors.set("hum2",  r.dhtOk ? r.humidity2 : -1.0f);
+  }
+  json.set("sensors", sensors);
+
+  // avg object — per-node canonical value (so rules per-node work)
+  FirebaseJson avg;
+  if (nodeIndex == 1) {
+    avg.set("temp", r.dhtOk ? r.temp1 : -1.0f);
+    avg.set("hum",  r.dhtOk ? r.humidity1 : -1.0f);
+    avg.set("soil", r.soilOk ? r.soil1 : -1.0f);
+  } else {
+    avg.set("temp", r.dhtOk ? r.temp2 : -1.0f);
+    avg.set("hum",  r.dhtOk ? r.humidity2 : -1.0f);
+    avg.set("soil", r.soilOk ? r.soil2 : -1.0f);
+  }
+  json.set("avg", avg);
+
+  // Compatibility top-level fields for older clients: set to this node's values
+  if (nodeIndex == 1) {
+    json.set("temp", r.dhtOk ? r.temp1 : -1.0f);
+    json.set("humidity", r.dhtOk ? r.humidity1 : -1.0f);
+    json.set("soil", r.soilOk ? r.soil1 : -1.0f);
+  } else {
+    json.set("temp", r.dhtOk ? r.temp2 : -1.0f);
+    json.set("humidity", r.dhtOk ? r.humidity2 : -1.0f);
+    json.set("soil", r.soilOk ? r.soil2 : -1.0f);
+  }
+
+  json.set("stage", stageName(r.growthStage));
+  json.set("day", r.currentDay);
+  json.set("alert_type", alertTypeName(alert.type));
+  json.set("sms_sent", smsSent);
+  json.set("fw_version", FIRMWARE_VERSION);
+}
+
+
 
 // Store all reading in RTC memory when Wi-Fi is unavailable. OfflineBuffer.
 
@@ -243,41 +304,49 @@ bool firebase_uploadReading(
     return false;
   }
 
- // Firebase build the path as: /nodes/{NODE_ID}/readings/{timestamp}
-  char path[120];
-  snprintf(path, sizeof(path), "/nodes/%s/readings/%u", NODE_ID, reading.timestamp);
-
-  // ── Build the JSON payload ───────────────────────────────────────────────
+  // Ensure averages valid before attempting upload
   if (!averagesValid(reading)) {
     DBG("[FIREBASE] Invalid averages — buffering reading instead of uploading.");
     addToOfflineBuffer(reading, alert, smsSent);
     return false;
   }
 
-  FirebaseJson json;
-  buildReadingJSON(json, reading, alert, smsSent);
+  // Build per-node JSON payloads and upload to both nodes
+  char path1[120];
+  char path2[120];
+  snprintf(path1, sizeof(path1), "/nodes/%s/readings/%u", NODE1_ID, reading.timestamp);
+  snprintf(path2, sizeof(path2), "/nodes/%s/readings/%u", NODE2_ID, reading.timestamp);
 
-  DBG_F("[FIREBASE] Uploading to path: %s\n", path);
-  DBG_F("[FIREBASE] Payload: %s\n", json.raw());
+  FirebaseJson json1;
+  FirebaseJson json2;
+  buildNodeJSON(json1, reading, alert, smsSent, 1);
+  buildNodeJSON(json2, reading, alert, smsSent, 2);
 
-  // Write to Firebase
-  
-  bool uploadOk = Firebase.RTDB.setJSON(&fbData, path, &json);
+  DBG_F("[FIREBASE] Uploading to path: %s\n", path1);
+  DBG_F("[FIREBASE] Payload: %s\n", json1.raw());
+  DBG_F("[FIREBASE] Uploading to path: %s\n", path2);
+  DBG_F("[FIREBASE] Payload: %s\n", json2.raw());
 
-  if (!uploadOk) {
-    DBG("[FIREBASE] Upload FAILED: " + fbData.errorReason());
+  bool uploadOk1 = Firebase.RTDB.setJSON(&fbData, path1, &json1);
+  if (!uploadOk1) {
+    DBG("[FIREBASE] Upload to node1 FAILED: " + fbData.errorReason());
+  }
+
+  bool uploadOk2 = Firebase.RTDB.setJSON(&fbData, path2, &json2);
+  if (!uploadOk2) {
+    DBG("[FIREBASE] Upload to node2 FAILED: " + fbData.errorReason());
+  }
+
+  if (!uploadOk1 || !uploadOk2) {
+    DBG("[FIREBASE] One or more uploads failed — buffering reading for later.");
     addToOfflineBuffer(reading, alert, smsSent);
     return false;
   }
-  DBG("[FIREBASE] Reading uploaded successfully.");
+  DBG("[FIREBASE] Readings uploaded successfully to both nodes.");
 
-  //  Write structured alert entry (if alert fired) 
+  // Write structured alert entry (if alert fired) to both node alert paths
   if (alert.type != ALERT_NONE) {
     char alertPath[120];
-    snprintf(alertPath, sizeof(alertPath),
-             "/nodes/%s/alerts/%u", NODE_ID, reading.timestamp);
-
-    // Structured alert JSON so clients can parse deterministically.
     FirebaseJson alertPayload;
     alertPayload.set("ts", (uint32_t)reading.timestamp);
     alertPayload.set("type", alertTypeName(alert.type));
@@ -289,13 +358,20 @@ bool firebase_uploadReading(
     alertPayload.set("source", String(alert.source));
     alertPayload.set("sms_sent", smsSent);
 
+    snprintf(alertPath, sizeof(alertPath), "/nodes/%s/alerts/%u", NODE1_ID, reading.timestamp);
+    Firebase.RTDB.setJSON(&fbData, alertPath, &alertPayload);
+    DBG_F("[FIREBASE] Structured alert JSON written to: %s\n", alertPath);
+
+    snprintf(alertPath, sizeof(alertPath), "/nodes/%s/alerts/%u", NODE2_ID, reading.timestamp);
     Firebase.RTDB.setJSON(&fbData, alertPath, &alertPayload);
     DBG_F("[FIREBASE] Structured alert JSON written to: %s\n", alertPath);
   }
 
-  //  Update node last_seen
+  // Update node last_seen for both nodes
   char lastSeenPath[80];
-  snprintf(lastSeenPath, sizeof(lastSeenPath), "/nodes/%s/last_seen", NODE_ID);
+  snprintf(lastSeenPath, sizeof(lastSeenPath), "/nodes/%s/last_seen", NODE1_ID);
+  Firebase.RTDB.setInt(&fbData, lastSeenPath, reading.timestamp);
+  snprintf(lastSeenPath, sizeof(lastSeenPath), "/nodes/%s/last_seen", NODE2_ID);
   Firebase.RTDB.setInt(&fbData, lastSeenPath, reading.timestamp);
 
   return true;
@@ -342,14 +418,22 @@ bool firebase_uploadBuffer() {
     alert.triggerValue = 0.0f;  // Exact value lost in buffer, upload type only
     alert.threshold    = 0.0f;
 
-    char path[120];
-    snprintf(path, sizeof(path), "/nodes/%s/readings/%u", NODE_ID, br.timestamp);
-    FirebaseJson json;
-    buildReadingJSON(json, r, alert, br.smsSent);
+    char path1[120];
+    char path2[120];
+    snprintf(path1, sizeof(path1), "/nodes/%s/readings/%u", NODE1_ID, br.timestamp);
+    snprintf(path2, sizeof(path2), "/nodes/%s/readings/%u", NODE2_ID, br.timestamp);
 
-    if (Firebase.RTDB.setJSON(&fbData, path, &json)) {
+    FirebaseJson json1;
+    FirebaseJson json2;
+    buildNodeJSON(json1, r, alert, br.smsSent, 1);
+    buildNodeJSON(json2, r, alert, br.smsSent, 2);
+
+    bool ok1 = Firebase.RTDB.setJSON(&fbData, path1, &json1);
+    bool ok2 = Firebase.RTDB.setJSON(&fbData, path2, &json2);
+
+    if (ok1 && ok2) {
       uploadedCount++;
-      DBG_F("[BUFFER] Uploaded buffered reading %d/%d.\n", i + 1, offlineBufferCount);
+      DBG_F("[BUFFER] Uploaded buffered reading %d/%d to both nodes.\n", i + 1, offlineBufferCount);
     } else {
       DBG_F("[BUFFER] Failed to upload buffered reading %d: %s\n",
             i + 1, fbData.errorReason().c_str());

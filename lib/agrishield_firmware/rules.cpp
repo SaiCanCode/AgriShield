@@ -164,7 +164,7 @@ bool evaluateRules(const SensorReading& r, unsigned long nowUnix, AlertResult& o
   }
 
   // ── Rule 4: Late blight risk ──────────────────────────────────────────────
-  bool blightConditions = (r.avgHumidity >= T.blightHumMin) &&
+  bool blightConditions = (r.avgHumidity >= T.blightHumMin) && 
                           (r.avgTemp     >= T.blightTempMin) &&
                           (r.avgTemp     <= T.blightTempMax);
 

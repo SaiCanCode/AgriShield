@@ -28,9 +28,10 @@ bool firebase_init();
 // Also writes to: /nodes/<NODE_ID>/alerts/<timestamp> if alert fired.
 // Also updates: /nodes/<NODE_ID>/last_seen
 // Returns true on success.
-bool firebase_uploadReading(const SensorReading& reading,
-                            const AlertResult&   alert,
-                            bool                 smsSent);
+bool firebase_uploadReading(
+    const SensorReading& reading,
+    const AlertResult&   alert,
+    bool                 smsSent);
 
 // Upload all buffered readings from RTC memory.
 // Called when Wi-Fi becomes available after offline cycles.

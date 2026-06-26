@@ -8,11 +8,9 @@ class AppAlertListener extends ConsumerStatefulWidget {
   const AppAlertListener({
     super.key,
     required this.child,
-    this.nodeId = 'node_001',
   });
 
   final Widget child;
-  final String nodeId;
 
   @override
   ConsumerState<AppAlertListener> createState() => _AppAlertListenerState();
@@ -25,7 +23,7 @@ class _AppAlertListenerState extends ConsumerState<AppAlertListener> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<List<AlertEntry>>>(
-      recentAlertsProvider(widget.nodeId),
+      allNodesAlertsProvider,
       (previous, next) {
         final alerts = next.asData?.value;
         if (alerts == null) return;

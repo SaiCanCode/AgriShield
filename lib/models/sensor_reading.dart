@@ -5,6 +5,7 @@ class SensorReading {
   final String alertType;
   final bool smsSent;
   final int timestamp;
+  final String nodeId;
 
   SensorReading({
     required this.temp,
@@ -13,9 +14,10 @@ class SensorReading {
     this.alertType = 'none',
     required this.smsSent,
     required this.timestamp,
+    this.nodeId = 'node_001',
   });
 
-  factory SensorReading.fromMap(Map<String, dynamic> map, {required int timestamp}) {
+  factory SensorReading.fromMap(Map<String, dynamic> map, {required int timestamp, required String nodeId}) {
     return SensorReading(
       temp: _toDouble(map['temp']),
       humidity: _toDouble(map['humidity']),
@@ -23,6 +25,7 @@ class SensorReading {
       alertType: map['alert_type']?.toString() ?? 'none',
       smsSent: _toBool(map['sms_sent']),
       timestamp: timestamp,
+      nodeId: nodeId,
     );
   }
 

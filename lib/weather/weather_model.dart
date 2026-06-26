@@ -7,6 +7,7 @@ class WeatherData {
   final double windSpeed;
   final double feelsLike;
   final HourlyForecast? nextHourForecast;
+  final DateTime? updatedAtUtc;
 
   WeatherData({
     required this.location,
@@ -17,6 +18,7 @@ class WeatherData {
     required this.windSpeed,
     required this.feelsLike,
     this.nextHourForecast,
+    this.updatedAtUtc,
   });
 
   factory WeatherData.fromCurrentJson(Map<String, dynamic> json) {
@@ -81,6 +83,76 @@ class WeatherData {
       feelsLike: current.feelsLike,
       nextHourForecast: nextHour,
     );
+  }
+
+  factory WeatherData.fromMap(Map<String, dynamic> map) {
+    final nextHourRaw = map['nextHourForecast'];
+    return WeatherData(
+      location: map['location']?.toString() ?? 'Unknown Location',
+      temperature: _toDouble(map['temperature']),
+      condition: map['condition']?.toString() ?? 'Unknown',
+      humidity: _toDouble(map['humidity']),
+      precipitation: _toDouble(map['precipitation']),
+      windSpeed: _toDouble(map['windSpeed']),
+      feelsLike: _toDouble(map['feelsLike']),
+      nextHourForecast: nextHourRaw is Map<String, dynamic>
+          ? HourlyForecast.fromMap(nextHourRaw)
+          : null,
+      updatedAtUtc: _toDateTime(map['updatedAtUtc']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'location': location,
+      'temperature': temperature,
+      'condition': condition,
+      'humidity': humidity,
+      'precipitation': precipitation,
+      'windSpeed': windSpeed,
+      'feelsLike': feelsLike,
+      'nextHourForecast': nextHourForecast?.toMap(),
+      'updatedAtUtc': updatedAtUtc?.toIso8601String(),
+    };
+  }
+
+  WeatherData copyWith({
+    String? location,
+    double? temperature,
+    String? condition,
+    double? humidity,
+    double? precipitation,
+    double? windSpeed,
+    double? feelsLike,
+    HourlyForecast? nextHourForecast,
+    DateTime? updatedAtUtc,
+    bool clearNextHourForecast = false,
+    bool clearUpdatedAt = false,
+  }) {
+    return WeatherData(
+      location: location ?? this.location,
+      temperature: temperature ?? this.temperature,
+      condition: condition ?? this.condition,
+      humidity: humidity ?? this.humidity,
+      precipitation: precipitation ?? this.precipitation,
+      windSpeed: windSpeed ?? this.windSpeed,
+      feelsLike: feelsLike ?? this.feelsLike,
+      nextHourForecast: clearNextHourForecast
+          ? null
+          : (nextHourForecast ?? this.nextHourForecast),
+      updatedAtUtc: clearUpdatedAt ? null : (updatedAtUtc ?? this.updatedAtUtc),
+    );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0.0;
+  }
+
+  static DateTime? _toDateTime(dynamic value) {
+    final raw = value?.toString();
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.toUtc();
   }
 
   static String _mapWeatherCode(int code) {
@@ -168,5 +240,26 @@ class HourlyForecast {
       condition: condition,
       temperature: temp,
     );
+  }
+
+  factory HourlyForecast.fromMap(Map<String, dynamic> map) {
+    return HourlyForecast(
+      time: map['time']?.toString() ?? '',
+      condition: map['condition']?.toString() ?? 'Unknown',
+      temperature: _toDouble(map['temperature']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'time': time,
+      'condition': condition,
+      'temperature': temperature,
+    };
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0.0;
   }
 }

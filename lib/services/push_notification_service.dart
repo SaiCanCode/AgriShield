@@ -7,9 +7,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config/firebase_config.dart';
 import '../core/routes.dart';
 import '../firebase_options.dart';
 import '../alerts/alert_entry.dart';
+import '../settings/settings_state.dart';
 
 class PushNotificationService {
   PushNotificationService._();
@@ -21,7 +24,7 @@ class PushNotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseDatabase _database = FirebaseDatabase.instanceFor(
     app: Firebase.app(),
-    databaseURL: 'https://agrishield-71213-default-rtdb.firebaseio.com',
+    databaseURL: firebaseDatabaseUrl,
   );
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -37,6 +40,13 @@ class PushNotificationService {
     'AgriShield Alerts',
     description: 'Shows urgent crop alert notifications from Firebase',
     importance: Importance.max,
+  );
+
+  static const AndroidNotificationChannel _weatherChannel = AndroidNotificationChannel(
+    'agrishield_weather',
+    'AgriShield Weather',
+    description: 'Shows rainfall and weather change alerts from Tomorrow.io',
+    importance: Importance.high,
   );
 
   Future<void> initialize() async {
@@ -69,6 +79,7 @@ class PushNotificationService {
     final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_channel);
+    await androidPlugin?.createNotificationChannel(_weatherChannel);
   }
 
   Future<void> _configureForegroundPresentation() async {
@@ -139,12 +150,14 @@ class PushNotificationService {
     required String title,
     required String body,
     String? payload,
+    AndroidNotificationChannel? channel,
   }) async {
+    final activeChannel = channel ?? _channel;
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
-        _channel.id,
-        _channel.name,
-        channelDescription: _channel.description,
+        activeChannel.id,
+        activeChannel.name,
+        channelDescription: activeChannel.description,
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
@@ -162,6 +175,8 @@ class PushNotificationService {
   }
 
   Future<void> showAlertNotification(AlertEntry alert) async {
+    if (!await _pushNotificationsEnabled()) return;
+
     final title = _titleForAlertType(alert.type);
     final body = _bodyForAlert(alert);
     await _showLocalNotification(
@@ -171,7 +186,32 @@ class PushNotificationService {
         'alertType': alert.type,
         'alertId': alert.alertId,
         'alertTs': alert.timestamp.toString(),
+        'route': Routes.alerts,
       }),
+    );
+  }
+
+  Future<void> showWeatherRainNotification({
+    required String location,
+    required double precipitationMm,
+    required String condition,
+    String? forecastCondition,
+  }) async {
+    if (!await _pushNotificationsEnabled()) return;
+
+    final forecastText = forecastCondition == null || forecastCondition.isEmpty
+        ? ''
+        : ' Forecast: $forecastCondition.';
+    await _showLocalNotification(
+      title: 'Rain expected',
+      body: '$location is showing rainfall activity at ${precipitationMm.toStringAsFixed(1)} mm.$forecastText',
+      payload: _encodePayload({
+        'notificationType': 'weather',
+        'route': Routes.weather,
+        'location': location,
+        'condition': condition,
+      }),
+      channel: _weatherChannel,
     );
   }
 
@@ -179,8 +219,23 @@ class PushNotificationService {
     final navigator = navigatorKey.currentState;
     if (navigator == null) return;
 
+    String route = Routes.alerts;
+    if (payload != null && payload.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(payload);
+        if (decoded is Map<String, dynamic>) {
+          final routeValue = decoded['route']?.toString().trim();
+          if (routeValue != null && routeValue.isNotEmpty) {
+            route = routeValue;
+          }
+        }
+      } catch (_) {
+        // Fall back to alerts.
+      }
+    }
+
     navigator.pushNamedAndRemoveUntil(
-      Routes.alerts,
+      route,
       (route) => false,
     );
   }
@@ -242,6 +297,8 @@ class PushNotificationService {
   }
 
   static Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
+    if (!await _pushNotificationsEnabled()) return;
+
     final notification = message.notification;
 
     // If a notification payload is present, Android/iOS usually display it
@@ -275,6 +332,11 @@ class PushNotificationService {
       notificationDetails: details,
       payload: jsonEncode(data),
     );
+  }
+
+  static Future<bool> _pushNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(settingsPushNotificationsEnabledKey) ?? true;
   }
 
   @pragma('vm:entry-point')
