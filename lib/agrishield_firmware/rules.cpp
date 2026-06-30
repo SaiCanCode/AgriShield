@@ -106,8 +106,8 @@ bool evaluateRules(const SensorReading& r, unsigned long nowUnix, AlertResult& o
   out.timestamp = nowUnix;
 
   // ── Determine current stage ──────────────────────────────────────────────
-  int         day   = getDeploymentDay(nowUnix);
-  GrowthStage stage = getGrowthStage(day);
+  int         day   = r.currentDay;
+  GrowthStage stage = r.growthStage;
   const StageThresholds& T = STAGE_THRESHOLDS[(int)stage];
 
   Serial.printf("[STAGE] Day %d — Stage: %s\n", day, stageName(stage));

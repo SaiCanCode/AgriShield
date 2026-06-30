@@ -116,7 +116,13 @@
 
 // Sensor Calibration Offsets
 #define DHT1_TEMP_OFFSET      0.0f    // no correction needed
-#define DHT2_TEMP_OFFSET     -2.6f   // board heat compensation
+// DHT22 #2 reads consistently +2.6°C higher than DHT22 #1 and reference thermometer.
+// Root cause: DHT22 #2 is mounted within ~3cm of the ESP32 voltage regulator on the PCB.
+// This offset was measured at 28°C ambient with both sensors in free air.
+// WARNING: If you physically relocate DHT22 #2 away from the regulator, re-measure
+// and update this value. An incorrect offset will silently corrupt all temperature
+// readings from sensor 2 and skew the avgTemp used by the rule engine.
+#define DHT2_TEMP_OFFSET     -2.6f
 
 // Compatibility aliases used by existing modules.
 #define PIN_DHT22             DHT1_PIN
@@ -188,7 +194,8 @@ const StageThresholds STAGE_THRESHOLDS[4] = {
 // Serial Debug
 // Set SERIAL_DEBUG to 0 before final field deployment.
 
-#define SERIAL_DEBUG             1
+#define SERIAL_DEBUG             0   // SET TO 0 FOR FIELD DEPLOYMENT
+                                     // SET TO 1 only when connected to USB for debugging
 #define SERIAL_BAUD              115200
 
 #if SERIAL_DEBUG

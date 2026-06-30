@@ -2,6 +2,7 @@
 #include "firebase_upload.h"
 #include "config.h"
 #include <WiFi.h>
+#include <esp_task_wdt.h>
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>   // Firebase token generation helper
 #include <math.h>                  // isfinite for runtime average validation
@@ -391,6 +392,7 @@ bool firebase_uploadBuffer() {
 
   int uploadedCount = 0;
   for (int i = 0; i < offlineBufferCount; i++) {
+    esp_task_wdt_reset();  // Each upload pair can take 3–8s — feed watchdog every iteration
     BufferedReading& br = offlineBuffer[i];
 
     // Reconstruct SensorReading and AlertResult from the buffer entry

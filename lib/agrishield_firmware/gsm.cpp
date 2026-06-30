@@ -1,14 +1,16 @@
 // =============================================================================
 //  gsm.cpp  —  SIM800L GSM / SMS Implementation
 //
-//  Hardware context (from SRS §4.1.4):
-//    - SIM800L is powered via a P-MOSFET controlled by GPIO21.
-//      When GPIO21 is HIGH → 2N2222 NPN is ON → MOSFET gate pulled LOW
-//      → MOSFET conducts → SIM800L receives 5V from MT3608.
-//      When GPIO21 is LOW (or during deep sleep) → SIM800L is UNPOWERED.
-//    - UART: ESP32 GPIO16 (RX2) ← SIM800L TXD (direct, 2.8V safe on 3.3V)
-//            ESP32 GPIO17 (TX2) → 1kΩ → SIM800L RXD → 2kΩ → GND (level shift)
-//    - 1000µF capacitor across SIM800L VCC and GND (handles 2A burst).
+//  Hardware context (REV 1.6 — IRLIZ44G low-side switch, no 2N2222):
+//    - SIM800L VCC connected DIRECTLY to BATT+ (3.7–4.2V).
+//      Do NOT connect to MT3608 5V output — that WILL destroy the module (max 4.4V).
+//    - IRLIZ44G N-MOSFET switches the SIM800L GND path (low-side switch):
+//      GPIO21 HIGH → Gate HIGH → MOSFET conducts → GND path closes → SIM800L ON
+//      GPIO21 LOW  → Gate LOW  → MOSFET off      → GND path open   → SIM800L OFF
+//    - 220Ω resistor (R1) between GPIO21 and Gate. 10kΩ pull-down (R2) Gate to GND.
+//    - 1000µF electrolytic cap across BATT+ rail and common GND, within 2cm of module.
+//    - UART: ESP32 GPIO16 (RX2) ← SIM800L TXD (direct, 2.8V safe on 3.3V input)
+//            ESP32 GPIO17 (TX2) → 1kΩ → node → SIM800L RXD; node → 2kΩ → GND
 //
 //  AT Command sequence for sending one SMS:
 //    1. ATE0          — disable echo (cleaner responses)
@@ -26,6 +28,7 @@
 #include "gsm.h"
 #include "config.h"
 #include <HardwareSerial.h>
+#include <esp_task_wdt.h>
 
 // Use UART2 (Serial2) for SIM800L. UART0 (Serial) is reserved for debug.
 static HardwareSerial sim800(2);   // UART2
@@ -84,7 +87,7 @@ bool gsm_init() {
   // ── Step 1: Power on the SIM800L via MOSFET gate ────────────────────────
   DBG("[GSM] Powering on SIM800L...");
   pinMode(PIN_MOSFET_GATE, OUTPUT);
-  digitalWrite(PIN_MOSFET_GATE, HIGH);  // HIGH → NPN on → MOSFET on → VCC to SIM800L
+  digitalWrite(PIN_MOSFET_GATE, HIGH);  // HIGH → Gate HIGH → MOSFET conducts → SIM800L GND path closes
   delay(GSM_BOOT_MS);                   // Give module time to boot and stabilise
 
   // ── Step 2: Open UART2 ──────────────────────────────────────────────────
@@ -125,6 +128,7 @@ bool gsm_init() {
   bool registered = false;
 
   while (millis() - start < GSM_REGISTER_TIMEOUT_MS) {
+    esp_task_wdt_reset();  // Registration can poll for 30s — feed watchdog each attempt
     sendAT("AT+CREG?");
     // We read the full response and check for both registration states.
     String resp = "";
@@ -177,7 +181,7 @@ void gsm_powerOff() {
   }
 
   // Cut power via the MOSFET gate regardless.
-  digitalWrite(PIN_MOSFET_GATE, LOW);  // LOW → NPN off → MOSFET off → VCC cut
+  digitalWrite(PIN_MOSFET_GATE, LOW);  // LOW → Gate LOW → MOSFET off → GND path open → SIM800L off
   sim800.end();
   _ready = false;
   DBG("[GSM] SIM800L powered off.");
@@ -343,6 +347,7 @@ bool gsm_sendRaw(const char* message) {
   // ── Step 3: Send Ctrl+Z (ASCII 26) to submit the SMS ────────────────────
   sim800.write(26);
   DBG("[GSM] Sent Ctrl+Z — awaiting +CMGS confirmation...");
+  esp_task_wdt_reset();  // SMS confirmation can take up to 30s — reset before blocking wait
 
   // ── Step 4: Wait for +CMGS: response ────────────────────────────────────
   // +CMGS: <n> means the SMS was accepted by the network.

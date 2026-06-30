@@ -8,6 +8,7 @@
 #include <esp_task_wdt.h>   // Hardware watchdog
 #include <esp_sleep.h>       // Deep sleep API
 
+RTC_DATA_ATTR static uint32_t rtcLastUnix = 0;
 
 void setup() {
   #if SERIAL_DEBUG
@@ -57,11 +58,10 @@ void loop() {
 
   // STEP 1: READ ALL SENSORS
   DBG("[MAIN] STEP 1: Reading sensors...");
-  esp_task_wdt_reset();  // Feed watchdog — sensor warmup takes up to 2.5 seconds
+  esp_task_wdt_reset();
 
   SensorReading reading = sensors_readAll();
 
-  // Print a clean summary of all sensor values
   DBG_F("[MAIN] ┌── Sensor Summary ─────────────────────────\n");
   if (reading.dhtOk) {
     DBG_F("[MAIN] │  Temperature : %.1f °C\n", reading.temperature);
@@ -77,21 +77,42 @@ void loop() {
   }
   DBG_F("[MAIN] └───────────────────────────────────────────\n");
 
-  
-  // STEP 2: GET TIMESTAMP
-  reading.timestamp = (uint32_t)(millis() / 1000UL);
-  reading.currentDay = getDeploymentDay(reading.timestamp);
+  // STEP 2: WI-FI + NTP — get real timestamp BEFORE rule evaluation
+  DBG("[MAIN] STEP 2: Attempting Wi-Fi for NTP timestamp...");
+  esp_task_wdt_reset();
+
+  bool wifiOk = wifi_connect();
+
+  if (wifiOk) {
+    time_t ntpNow;
+    time(&ntpNow);
+    if (ntpNow > 1577836800) {  // Valid if after Jan 1 2020
+      reading.timestamp = (uint32_t)ntpNow;
+      rtcLastUnix = reading.timestamp;
+      DBG_F("[MAIN] NTP timestamp: %u\n", reading.timestamp);
+    } else {
+      DBG("[MAIN] WARNING: NTP returned invalid time. Using RTC fallback.");
+      reading.timestamp = (rtcLastUnix > 0) ? rtcLastUnix + 900 : (uint32_t)(millis() / 1000UL);
+    }
+  } else {
+    DBG("[MAIN] Wi-Fi unavailable. Using RTC timestamp fallback.");
+    reading.timestamp = (rtcLastUnix > 0) ? rtcLastUnix + 900 : (uint32_t)(millis() / 1000UL);
+    if (rtcLastUnix > 0) rtcLastUnix += 900;
+  }
+
+  esp_task_wdt_reset();
+
+  // Now that we have a real timestamp, compute stage
+  reading.currentDay  = getDeploymentDay(reading.timestamp);
   reading.growthStage = getGrowthStage(reading.currentDay);
-  DBG_F("[MAIN] Preliminary timestamp (millis-based): %u\n", reading.timestamp);
+  DBG_F("[MAIN] Deployment day: %d  Stage: %s\n", reading.currentDay, stageName(reading.growthStage));
 
-
-  // STEP 3: RUN RULE ENGINE (structured AlertResult)
+  // STEP 3: RUN RULE ENGINE
   DBG("[MAIN] STEP 3: Evaluating alert rules...");
   esp_task_wdt_reset();
 
-  // New structured rule API: evaluateRules(reading, nowUnix, outAlert)
   AlertResult alert;
-  bool hasAlert = evaluateRules(reading, reading.timestamp, alert); 
+  bool hasAlert = evaluateRules(reading, reading.timestamp, alert);
 
   if (!hasAlert || alert.type == ALERT_NONE) {
     DBG("[MAIN] Rule engine: ALL CLEAR — no alert conditions detected.");
@@ -100,9 +121,7 @@ void loop() {
           alertTypeName(alert.type), alert.triggerValue, alert.threshold);
   }
 
-
   // STEP 4: SEND SMS IF ALERT FIRED
-  
   bool smsSent = false;
 
   if (alert.type != ALERT_NONE) {
@@ -110,7 +129,7 @@ void loop() {
     esp_task_wdt_reset();
 
     if (gsm_init()) {
-      esp_task_wdt_reset();  // GSM init can take up to 30 seconds
+      esp_task_wdt_reset();
       smsSent = gsm_sendAlert(alert, reading);
 
       if (smsSent) {
@@ -120,84 +139,48 @@ void loop() {
       }
     } else {
       DBG("[MAIN] SIM800L initialisation failed. SMS not sent.");
-      DBG("[MAIN] Check: 1000µF capacitor, MT3608 voltage output, SIM card.");
+      DBG("[MAIN] Check: 1000µF cap on BATT+ rail, BATT+ to SIM800L VCC (not MT3608), SIM card.");
     }
 
-    // ALWAYS power off SIM800L after use, regardless of success/failure.
     gsm_powerOff();
     esp_task_wdt_reset();
   } else {
     DBG("[MAIN] STEP 4: No alert — SIM800L stays powered off.");
   }
 
-
-  // STEP 5: WI-FI AND FIREBASE UPLOAD
- 
-  DBG("[MAIN] STEP 5: Attempting Wi-Fi connection for Firebase upload...");
+  // STEP 5: FIREBASE UPLOAD (Wi-Fi already connected from Step 2 if available)
+  DBG("[MAIN] STEP 5: Firebase upload...");
   esp_task_wdt_reset();
 
-  if (wifi_connect()) {
-
-    // NTP synced inside wifi_connect(). Get the accurate timestamp now
-
-    time_t ntpNow;
-    time(&ntpNow);
-    if (ntpNow > 1577836800) {  // Valid NTP time (after 2020)
-      reading.timestamp = (uint32_t)ntpNow;
-      reading.currentDay = getDeploymentDay(reading.timestamp);
-      reading.growthStage = getGrowthStage(reading.currentDay);
-      DBG_F("[MAIN] Timestamp updated from NTP: %u\n", reading.timestamp);
-    }
-
-    esp_task_wdt_reset();
-
+  if (wifiOk) {
     if (firebase_init()) {
       esp_task_wdt_reset();
-
-      // Upload any readings that were buffered during offline cycles first.
       firebase_uploadBuffer();
       esp_task_wdt_reset();
-
-      // Upload the current cycle's reading.
       bool uploadOk = firebase_uploadReading(reading, alert, smsSent);
-
-      if (uploadOk) {
-        DBG("[MAIN] Firebase upload: SUCCESS.");
-      } else {
-        DBG("[MAIN] Firebase upload: FAILED. Reading buffered for next cycle.");
-      }
+      DBG(uploadOk ? "[MAIN] Firebase upload: SUCCESS." : "[MAIN] Firebase upload: FAILED. Buffered.");
     } else {
-      DBG("[MAIN] Firebase auth failed. Reading buffered.");
+      DBG("[MAIN] Firebase auth failed. Buffering reading.");
       firebase_uploadReading(reading, alert, smsSent);
     }
   } else {
-    DBG("[MAIN] Wi-Fi unavailable. Reading will be buffered.");
+    DBG("[MAIN] No Wi-Fi. Buffering reading for next cycle.");
     firebase_uploadReading(reading, alert, smsSent);
   }
 
-  // ALWAYS disconnect Wi-Fi before sleep regardless of upload success.
   wifi_disconnect();
   esp_task_wdt_reset();
 
-  
-  // STEP 6: ENTER DEEP SLEEP
- 
+  // STEP 6: DEEP SLEEP
   DBG("[MAIN] STEP 6: All tasks complete. Entering deep sleep.");
-  DBG_F("[MAIN] Sleeping for %llu seconds (15 minutes).\n",
-        SLEEP_DURATION_US / 1000000ULL);
-  DBG("[MAIN] ─────────────────────────────────────────────────\n\n");
+  DBG_F("[MAIN] Sleeping for %llu seconds.\n", SLEEP_DURATION_US / 1000000ULL);
 
-  // Stop the Serial output cleanly so the last message is printed.
   #if SERIAL_DEBUG
   Serial.flush();
   delay(100);
   #endif
 
-  // Disarm the watchdog before sleeping (it resets on wake anyway).
   esp_task_wdt_delete(NULL);
-
-  // Set the deep sleep timer and go.
   esp_sleep_enable_timer_wakeup(SLEEP_DURATION_US);
   esp_deep_sleep_start();
-  
 }
