@@ -7,17 +7,99 @@
 
 #include <esp_task_wdt.h>   // Hardware watchdog
 #include <esp_sleep.h>       // Deep sleep API
-
+  
 RTC_DATA_ATTR static uint32_t rtcLastUnix = 0;
+
+#if ENABLE_DEPLOY_SERIAL_COMMANDS
+static void printDeployCommandHelp() {
+  Serial.println("[DEPLOY] Commands: DEPLOY_SHOW | DEPLOY_SET_TS <unix> | DEPLOY_CLEAR");
+}
+
+static int computeDeploymentDayFromTs(unsigned long nowUnix, unsigned long deployTs) {
+  if (!rules_isValidUnixTime(deployTs)) return 1;
+  if (!rules_isValidUnixTime(nowUnix) || nowUnix < deployTs) return 1;
+
+  int day = (int)((nowUnix - deployTs) / 86400UL) + 1;
+  if (day < 1) day = 1;
+  if (day > DEPLOY_DURATION_DAYS) day = DEPLOY_DURATION_DAYS;
+  return day;
+}
+
+static void handleDeploySerialCommands(unsigned long nowUnix) {
+  if (!Serial.available()) {
+    return;
+  }
+
+  String line = Serial.readStringUntil('\n');
+  line.trim();
+  if (line.length() == 0) {
+    return;
+  }
+
+  if (line.equalsIgnoreCase("DEPLOY_SHOW")) {
+    const unsigned long deployTs = rules_getDeploymentTimestamp();
+    if (!rules_isValidUnixTime(deployTs)) {
+      Serial.println("[DEPLOY] deploy_ts is not set.");
+      return;
+    }
+
+    const int day = computeDeploymentDayFromTs(nowUnix, deployTs);
+    const GrowthStage stage = getGrowthStage(day);
+    Serial.printf("[DEPLOY] deploy_ts=%lu day=%d stage=%s\n", deployTs, day, stageName(stage));
+    return;
+  }
+
+  if (line.startsWith("DEPLOY_SET_TS")) {
+    const int spacePos = line.indexOf(' ');
+    if (spacePos < 0 || spacePos == line.length() - 1) {
+      Serial.println("[DEPLOY] Usage: DEPLOY_SET_TS <unix>");
+      return;
+    }
+
+    const String arg = line.substring(spacePos + 1);
+    const unsigned long deployTs = strtoul(arg.c_str(), nullptr, 10);
+    if (!rules_setDeploymentTimestamp(deployTs)) {
+      Serial.println("[DEPLOY] Invalid timestamp. Use Unix seconds (>= 2020 and <= 2040). ");
+      return;
+    }
+
+    const int day = computeDeploymentDayFromTs(nowUnix, deployTs);
+    const GrowthStage stage = getGrowthStage(day);
+    Serial.printf("[DEPLOY] Saved deploy_ts=%lu day=%d stage=%s\n", deployTs, day, stageName(stage));
+    return;
+  }
+
+  if (line.equalsIgnoreCase("DEPLOY_CLEAR")) {
+    const bool cleared = rules_clearDeploymentTimestamp();
+    if (cleared) {
+      Serial.println("[DEPLOY] Cleared deploy_ts.");
+    } else {
+      Serial.println("[DEPLOY] No deploy_ts to clear.");
+    }
+    return;
+  }
+
+  if (line.equalsIgnoreCase("DEPLOY_HELP")) {
+    printDeployCommandHelp();
+    return;
+  }
+
+  Serial.println("[DEPLOY] Unknown command. Use DEPLOY_HELP.");
+}
+#endif
 
 void setup() {
   #if SERIAL_DEBUG
   Serial.begin(SERIAL_BAUD);
+  Serial.setTimeout(25);
   delay(500);  // Let USB serial enumerate
   Serial.println("\n\n========================================");
   Serial.println("  AgriShield Firmware v" FIRMWARE_VERSION);
   Serial.println("  FUTA SEN/20/5101 — Ige Samuel");
   Serial.println("========================================");
+  #if ENABLE_DEPLOY_SERIAL_COMMANDS
+  printDeployCommandHelp();
+  #endif
   #endif
 
   // ── Watchdog: 60-second timeout (SRS §8, Risk R10) ──────────────────────
@@ -55,6 +137,10 @@ void setup() {
 
 void loop() {
   DBG("[MAIN] ─────────────── New sensing cycle ───────────────");
+
+  #if ENABLE_DEPLOY_SERIAL_COMMANDS
+  handleDeploySerialCommands(rtcLastUnix);
+  #endif
 
   // STEP 1: READ ALL SENSORS
   DBG("[MAIN] STEP 1: Reading sensors...");
@@ -101,6 +187,10 @@ void loop() {
   }
 
   esp_task_wdt_reset();
+
+  #if ENABLE_DEPLOY_SERIAL_COMMANDS
+  handleDeploySerialCommands(reading.timestamp);
+  #endif
 
   // Now that we have a real timestamp, compute stage
   reading.currentDay  = getDeploymentDay(reading.timestamp);

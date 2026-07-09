@@ -168,6 +168,29 @@ const StageThresholds STAGE_THRESHOLDS[4] = {
 // across all deep sleep cycles and power cycles.
 // Written ONCE on first boot, never overwritten.
 
+// Deployment timestamp source control
+// DEPLOY_TS_MODE_AUTO   : firmware uses existing NVS value, or first valid epoch
+//                         time it sees.
+// DEPLOY_TS_MODE_MANUAL : firmware seeds NVS from MANUAL_DEPLOY_TS when unset.
+// MANUAL_DEPLOY_TS must be a Unix timestamp in seconds.
+
+#define DEPLOY_TS_MODE_AUTO      0
+#define DEPLOY_TS_MODE_MANUAL    1
+
+#ifndef DEPLOY_TS_MODE
+  #define DEPLOY_TS_MODE         DEPLOY_TS_MODE_AUTO
+#endif
+
+#ifndef MANUAL_DEPLOY_TS
+  #define MANUAL_DEPLOY_TS       0UL
+#endif
+
+// Serial maintenance commands (DEPLOY_SHOW / DEPLOY_SET_TS / DEPLOY_CLEAR)
+// Keep disabled by default for field builds.
+#ifndef ENABLE_DEPLOY_SERIAL_COMMANDS
+  #define ENABLE_DEPLOY_SERIAL_COMMANDS 0
+#endif
+
 #define NVS_NAMESPACE            "agrishield"
 #define NVS_DEPLOY_KEY           "deploy_ts"
 

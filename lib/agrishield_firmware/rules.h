@@ -8,6 +8,18 @@
 #include <Arduino.h>
 #include "types.h"
 
+// Returns true when the timestamp can be used for deployment-day math.
+bool rules_isValidUnixTime(unsigned long unixTs);
+
+// Reads deployment timestamp from NVS. Returns 0 if unset.
+unsigned long rules_getDeploymentTimestamp();
+
+// Writes deployment timestamp to NVS if valid.
+bool rules_setDeploymentTimestamp(unsigned long deployTs);
+
+// Clears deployment timestamp in NVS.
+bool rules_clearDeploymentTimestamp();
+
 // Returns the deployment day (1-indexed) from NVS, writing start timestamp
 // on first boot. Requires NTP to be synced before calling.
 int getDeploymentDay(unsigned long nowUnix);

@@ -14,12 +14,47 @@
 #include "types.h"
 #include <Preferences.h>
 
+static constexpr unsigned long kMinValidUnixTs = 1577836800UL;  // 2020-01-01T00:00:00Z
+static constexpr unsigned long kMaxReasonableUnixTs = 2208988800UL;  // 2040-01-01T00:00:00Z
+
 // RTC memory: cooldown timestamps persist across deep sleep
 RTC_DATA_ATTR unsigned long lastDroughtAlert   = 0;
 RTC_DATA_ATTR unsigned long lastFloodAlert     = 0;
 RTC_DATA_ATTR unsigned long lastHeatAlert      = 0;
 RTC_DATA_ATTR unsigned long lastBlightAlert    = 0;
 RTC_DATA_ATTR int           blightReadings     = 0;
+
+bool rules_isValidUnixTime(unsigned long unixTs) {
+  return unixTs >= kMinValidUnixTs && unixTs <= kMaxReasonableUnixTs;
+}
+
+unsigned long rules_getDeploymentTimestamp() {
+  Preferences prefs;
+  prefs.begin(NVS_NAMESPACE, true);
+  const unsigned long deployTs = prefs.getULong(NVS_DEPLOY_KEY, 0);
+  prefs.end();
+  return deployTs;
+}
+
+bool rules_setDeploymentTimestamp(unsigned long deployTs) {
+  if (!rules_isValidUnixTime(deployTs)) {
+    return false;
+  }
+
+  Preferences prefs;
+  prefs.begin(NVS_NAMESPACE, false);
+  prefs.putULong(NVS_DEPLOY_KEY, deployTs);
+  prefs.end();
+  return true;
+}
+
+bool rules_clearDeploymentTimestamp() {
+  Preferences prefs;
+  prefs.begin(NVS_NAMESPACE, false);
+  const bool removed = prefs.remove(NVS_DEPLOY_KEY);
+  prefs.end();
+  return removed;
+}
 
 // =============================================================================
 //  getDeploymentDay
@@ -30,19 +65,36 @@ RTC_DATA_ATTR int           blightReadings     = 0;
 //  Requires NTP time to have been synced before calling.
 // =============================================================================
 int getDeploymentDay(unsigned long nowUnix) {
-  Preferences prefs;
-  prefs.begin(NVS_NAMESPACE, false);   // false = read/write mode
-
-  unsigned long deployTs = prefs.getULong(NVS_DEPLOY_KEY, 0);
+  unsigned long deployTs = rules_getDeploymentTimestamp();
 
   if (deployTs == 0) {
-    // First ever boot — record deployment start
-    deployTs = nowUnix;
-    prefs.putULong(NVS_DEPLOY_KEY, deployTs);
-    Serial.println("[STAGE] First boot — deployment start recorded.");
+    bool seeded = false;
+
+    #if DEPLOY_TS_MODE == DEPLOY_TS_MODE_MANUAL
+    if (rules_setDeploymentTimestamp(MANUAL_DEPLOY_TS)) {
+      deployTs = MANUAL_DEPLOY_TS;
+      seeded = true;
+      Serial.println("[STAGE] Deployment start seeded from MANUAL_DEPLOY_TS.");
+    } else {
+      Serial.println("[STAGE] MANUAL_DEPLOY_TS invalid or unset. Falling back to auto init.");
+    }
+    #endif
+
+    if (!seeded && rules_setDeploymentTimestamp(nowUnix)) {
+      deployTs = nowUnix;
+      seeded = true;
+      Serial.println("[STAGE] First valid epoch recorded as deployment start.");
+    }
+
+    if (!seeded) {
+      Serial.println("[STAGE] Deployment start not initialized yet (waiting for valid epoch). Day=1.");
+      return 1;
+    }
   }
 
-  prefs.end();
+  if (!rules_isValidUnixTime(nowUnix) || nowUnix < deployTs) {
+    return 1;
+  }
 
   // Calculate elapsed days (1-indexed so day 1 = hours 0–24)
   int day = (int)((nowUnix - deployTs) / 86400UL) + 1;
